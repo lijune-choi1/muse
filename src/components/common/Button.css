@@ -1,0 +1,79 @@
+/* src/components/common/Button.css */
+.button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+    white-space: nowrap;
+    text-align: center;
+  }
+  
+  /* Primary button - dark background, light text */
+  .button-primary {
+    background-color: #000;
+    color: #fff;
+    border: 1px solid #000;
+  }
+  
+  .button-primary:hover {
+    background-color: #333;
+    border-color: #333;
+  }
+  
+  /* Secondary button - light background, dark text, with border */
+  .button-secondary {
+    background-color: #fff;
+    color: #000;
+    border: 1px solid #ddd;
+  }
+  
+  .button-secondary:hover {
+    background-color: #f5f5f5;
+    border-color: #ccc;
+  }
+  
+  /* Action button - smaller, light background, for actions in cards */
+  .button-action {
+    background-color: #fff;
+    color: #000;
+    border: 1px solid #ddd;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+  }
+  
+  .button-action:hover {
+    background-color: #f5f5f5;
+    border-color: #ccc;
+  }
+  
+  /* Disabled state for all buttons */
+  .button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  
+  /* Icon buttons - for buttons with just an icon */
+  .button-icon {
+    padding: 0.5rem;
+    border-radius: 50%;
+  }
+  
+  /* Size variations */
+  .button-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+  }
+  
+  .button-lg {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+  }
+  
+  /* Full width button */
+  .button-full {
+    width: 100%;
+  }
