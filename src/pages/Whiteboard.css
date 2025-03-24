@@ -88,6 +88,7 @@
   font-size: 24px;
   background-color: white;
   border-radius: 50%;
+  border: 1px solid black;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
   z-index: 10;
   transform: translate(-50%, -50%);
@@ -114,9 +115,8 @@
   justify-content: space-between;
   margin-bottom: 1.5rem;
   padding: 1rem;
-  background-color: #f5f5f5;
+  background-color: white;
   border-radius: 0.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   z-index: 10;
   position: relative;
   align-items: center;
@@ -125,18 +125,6 @@
 .tool-buttons {
   display: flex;
   gap: 0.5rem;
-}
-
-.tool-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 0.5rem;
-  border: none;
-  border-radius: 0.25rem;
-  background-color: #e0e0e0;
-  cursor: pointer;
-  transition: all 0.2s;
 }
 
 .tool-btn:hover {
@@ -179,9 +167,6 @@
 
 .toggle-btn {
   padding: 0.5rem 1rem;
-  background-color: #e0e0e0;
-  border: none;
-  border-radius: 0.25rem;
   cursor: pointer;
   transition: background-color 0.2s;
 }
@@ -191,7 +176,7 @@
 }
 
 .toggle-btn.active {
-  background-color: #2196F3;
+  background-color: black;
   color: white;
 }
 
@@ -201,10 +186,8 @@
 }
 
 .stats-box {
-  background-color: #f5f5f5;
-  border-radius: 0.5rem;
   padding: 0.75rem 1rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid black;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -277,6 +260,7 @@
 /* Comment bubble styles */
 .comment-bubble {
   position: absolute;
+  border: 2px solid black;
   width: 200px;
   border-radius: 0.5rem;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
@@ -307,6 +291,7 @@
   background-color: rgba(0, 0, 0, 0.1);
   cursor: move;
   user-select: none;
+  border-bottom: 2px solid black;
 }
 
 .comment-type {
@@ -389,11 +374,11 @@
   bottom: 0;
   left: 0;
   width: 100%;
-  background-color: #f5f5f5;
+  background-color: white;
   padding: 0.75rem;
   display: flex;
   justify-content: center;
-  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+  border-top: 2px solid black;
   z-index: 100;
 }
 
@@ -440,7 +425,7 @@
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background-color: #2196F3;
+  background-color: black;
   color: white;
   display: flex;
   justify-content: center;
@@ -456,7 +441,7 @@
 }
 
 .fab-main:hover {
-  background-color: #1976D2;
+  background-color: #272727;
   transform: scale(1.05);
 }
 
@@ -493,14 +478,14 @@
   transform: translate(-50%, -50%);
   background-color: white;
   padding: 1rem;
-  border-radius: 0.5rem;
   box-shadow: 0 2px 15px rgba(0, 0, 0, 0.3);
   z-index: 200;
   width: 300px;
+  border: 1px solid black;
 }
 
 .link-text-input {
-  width: 100%;
+  width: 90%;
   padding: 0.5rem;
   margin-bottom: 0.75rem;
   border: 1px solid #ddd;
@@ -517,17 +502,16 @@
 .link-text-buttons button {
   padding: 0.5rem 1rem;
   border: none;
-  border-radius: 0.25rem;
   cursor: pointer;
 }
 
 .link-text-buttons button:first-child {
-  background-color: #2196F3;
+  background-color: #000000;
   color: white;
 }
 
 .link-text-buttons button:last-child {
-  background-color: #e0e0e0;
+  background-color: #ffffff;
 }
 
 /* Color picker for marker */
@@ -613,9 +597,8 @@
   flex-direction: column;
   align-items: center;
   padding: 0.5rem;
-  border: none;
-  border-radius: 0.25rem;
-  background-color: #e0e0e0;
+  background-color: white;
+  border: 1px solid black;
   cursor: pointer;
   transition: all 0.2s;
   min-width: 60px;
@@ -626,7 +609,7 @@
 }
 
 .tool-btn.active {
-  background-color: #2196F3;
+  background-color: #000000;
   color: white;
 }
 
@@ -665,9 +648,8 @@
 
 .toggle-btn {
   padding: 0.5rem 1rem;
-  background-color: #e0e0e0;
-  border: none;
-  border-radius: 0.25rem;
+  background-color: white;
+  border: 1px solid black;
   cursor: pointer;
   transition: background-color 0.2s;
   white-space: nowrap;
@@ -678,7 +660,7 @@
 }
 
 .toggle-btn.active {
-  background-color: #2196F3;
+  background-color: black;
   color: white;
 }
 
@@ -687,20 +669,6 @@
   cursor: not-allowed;
 }
 
-/* Bottom toolbar enhancements */
-.bottom-toolbar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  background-color: #f5f5f5;
-  padding: 0.75rem;
-  display: flex;
-  justify-content: center;
-  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
-  z-index: 100;
-  overflow-x: auto;
-}
 
 /* Color and width picker improvements */
 .color-picker {
