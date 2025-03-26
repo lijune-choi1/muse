@@ -1,0 +1,123 @@
+/* src/components/common/CommentBubble.css */
+.comment-bubble {
+    position: absolute;
+    background-color: white;
+    border: 2px solid black;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    z-index: 5;
+    min-width: 200px;
+    max-width: 300px;
+    overflow: hidden;
+  }
+  
+  /* Common elements */
+  .user-section {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .user-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #e0e0e0;
+    border: 1px solid #999;
+  }
+  
+  .comment-type-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #ffb6c1; /* Default light pink */
+    color: black;
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+  
+  /* Hover state - Image 1 */
+  .comment-bubble.hover-state {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .comment-text {
+    color: #666;
+    margin-top: 5px;
+  }
+  
+  /* Expanded mode - Image 2 */
+  .comment-bubble.expanded,
+  .comment-bubble.edit-mode {
+    width: 300px;
+  }
+  
+  .comment-bubble-header {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    gap: 10px;
+  }
+  
+  .header-actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .delete-button,
+  .close-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  
+  .close-button {
+    font-weight: bold;
+  }
+  
+  .comment-content {
+    padding: 12px;
+    min-height: 60px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  
+  /* Edit mode specific */
+  .comment-edit-container {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .type-selector {
+    padding: 10px 12px 5px;
+  }
+  
+  .comment-type-select {
+    border: none;
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  
+  .comment-textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 12px;
+    border: none;
+    border-top: 1px solid #eee;
+    resize: vertical;
+    font-family: inherit;
+    font-size: 0.9rem;
+    outline: none;
+  }
