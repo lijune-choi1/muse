@@ -481,106 +481,78 @@ const stopDraggingStamp = () => {
     setExpandedComment(null);
   };
 
-  // Render functions
-  const renderLinks = () => {
-    if (!showLinks) return null;
+  // Replace the renderLinks function in your Whiteboard.jsx file with this updated version
+
+// Render functions
+const renderLinks = () => {
+  if (!showLinks) return null;
+  
+  return links.map(link => {
+    const sourceComment = comments.find(c => c.id === link.source);
+    const targetComment = comments.find(c => c.id === link.target);
     
-    return links.map(link => {
-      const sourceComment = comments.find(c => c.id === link.source);
-      const targetComment = comments.find(c => c.id === link.target);
-      
-      if (!sourceComment || !targetComment) return null;
-      
-      const sourcePos = {
-        x: sourceComment.position.x,
-        y: sourceComment.position.y
-      };
-      
-      const targetPos = {
-        x: targetComment.position.x,
-        y: targetComment.position.y
-      };
-      
-      // Calculate midpoint for link text and X button
-      const midX = (sourcePos.x + targetPos.x) / 2;
-      const midY = (sourcePos.y + targetPos.y) / 2;
-      
-      return (
-        <g key={link.id} className="comment-link">
-          {/* Link line */}
-          <line
-            x1={sourcePos.x}
-            y1={sourcePos.y}
-            x2={targetPos.x}
-            y2={targetPos.y}
-          />
-          
-          {/* Link text container - styled as a bubble similar to the mockup */}
-          <foreignObject 
-            x={midX - 50} 
-            y={midY - 15}
-            width="100" 
-            height="30"
+    if (!sourceComment || !targetComment) return null;
+    
+    const sourcePos = {
+      x: sourceComment.position.x,
+      y: sourceComment.position.y
+    };
+    
+    const targetPos = {
+      x: targetComment.position.x,
+      y: targetComment.position.y
+    };
+    
+    // Calculate midpoint for link text and X button
+    const midX = (sourcePos.x + targetPos.x) / 2;
+    const midY = (sourcePos.y + targetPos.y) / 2;
+    
+    return (
+      <g key={link.id} className="comment-link">
+        {/* Link line */}
+        <line
+          x1={sourcePos.x}
+          y1={sourcePos.y}
+          x2={targetPos.x}
+          y2={targetPos.y}
+        />
+        
+        {/* Link text container */}
+        <foreignObject 
+          x={midX - 50} 
+          y={midY - 15}
+          width="100" 
+          height="30"
+        >
+          <div
+            xmlns="http://www.w3.org/1999/xhtml"
+            className="link-text-container"
           >
-            <div
-              xmlns="http://www.w3.org/1999/xhtml"
-              className="link-text-container"
-              style={{
-                border: '2px solid black',
-                borderRadius: '10px',
-                padding: '5px 10px',
-                backgroundColor: 'white',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                position: 'relative',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-              }}
-            >
-              <span 
-                className="link-text"
-                style={{
-                  fontSize: '14px',
-                  fontWeight: '500'
-                }}
-              >
-                {link.text || "link"}
-              </span>
-            </div>
-          </foreignObject>
-          
-          {/* Delete button */}
-          <foreignObject
-            x={midX + 45}
-            y={midY - 10}
-            width="20"
-            height="20"
+            <span className="link-text">
+              {link.text || "link"}
+            </span>
+          </div>
+        </foreignObject>
+        
+        {/* Delete button */}
+        <foreignObject
+          x={midX + 45}
+          y={midY - 10}
+          width="20"
+          height="20"
+        >
+          <div
+            xmlns="http://www.w3.org/1999/xhtml"
+            className="link-delete-btn"
+            onClick={() => deleteLink(link.id)}
           >
-            <div
-              xmlns="http://www.w3.org/1999/xhtml"
-              className="link-delete-btn"
-              onClick={() => deleteLink(link.id)}
-              style={{
-                width: '20px',
-                height: '20px',
-                borderRadius: '50%',
-                backgroundColor: 'white',
-                border: '1px solid #999',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                fontSize: '14px'
-              }}
-            >
-              ×
-            </div>
-          </foreignObject>
-        </g>
-      );
-    });
-  };
+            ×
+          </div>
+        </foreignObject>
+      </g>
+    );
+  });
+};
 
   return (
     <div className="whiteboard-container">
