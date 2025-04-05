@@ -215,8 +215,7 @@
 /* Fullscreen button */
 .fullscreen-button {
   position: absolute;
-  top: 20px;
-  right: 20px;
+  top: 32px;
   width: 36px;
   height: 36px;
   border-radius: 50%;

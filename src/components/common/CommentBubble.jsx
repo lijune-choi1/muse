@@ -1,24 +1,21 @@
-// src/components/common/CommentBubble.jsx
-import React from 'react';
+// Updated CommentBubble.jsx
+import React, { useState, useEffect } from 'react';
 import './CommentBubble.css';
 
 const CommentBubble = ({ 
   comment, 
-  isExpanded, 
-  isEditing,
   onContentChange, 
   onBlur, 
   onTypeChange, 
   onDelete,
   onClose,
-  setEditingComment
+  userProfile // New prop for user information
 }) => {
-  // Different states based on props
-  let bubbleContent;
-  let bubbleClass = "comment-bubble";
-  
-  // Handle either text or content property for backward compatibility
-  const commentText = comment.content || comment.text || "";
+  const [isEditing, setIsEditing] = useState(false);
+  const [localComment, setLocalComment] = useState({
+    ...comment,
+    text: comment.content || comment.text || ""
+  });
 
   // Category colors and labels
   const categoryInfo = {
@@ -37,38 +34,88 @@ const CommentBubble = ({
   };
 
   // Get current category info or default to technical
-  const currentCategory = categoryInfo[comment.type?.toLowerCase()] || categoryInfo.technical;
+  const currentCategory = categoryInfo[localComment.type?.toLowerCase()] || categoryInfo.technical;
+
+  // Allow editing on single click
+  const handleClick = () => {
+    setIsEditing(true);
+  };
+
+  const handleSave = () => {
+    // Save changes
+    onContentChange(localComment.id, localComment.text);
+    onTypeChange(localComment.id, localComment.type);
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    // Revert to original comment
+    setLocalComment({
+      ...comment,
+      text: comment.content || comment.text || ""
+    });
+    setIsEditing(false);
+  };
+
+  // Cycle through comment types on right-click
+  const handleTypeChange = (e) => {
+    e.preventDefault();
+    const types = ['technical', 'conceptual', 'details'];
+    const currentIndex = types.indexOf(localComment.type.toLowerCase());
+    const nextIndex = (currentIndex + 1) % types.length;
+    
+    setLocalComment(prev => ({
+      ...prev,
+      type: types[nextIndex]
+    }));
+  };
+
+  // Rendering logic
+  let bubbleContent;
+  let bubbleClass = "comment-bubble";
+
+  // Determine user profile information
+  const userName = userProfile?.name || "Anonymous";
+  const userAvatar = userProfile?.avatar || "/default-avatar.png";
 
   if (isEditing) {
-    // Edit mode - Image 2 (expanded with edit controls)
+    // Edit mode
     bubbleClass += " edit-mode";
     
     bubbleContent = (
       <>
         <div className="comment-bubble-header">
           <div className="user-section">
-            <div className="user-icon"></div>
-            <span>User</span>
+            <img 
+              src={userAvatar} 
+              alt={userName} 
+              className="user-icon" 
+            />
+            <span>{userName}</span>
           </div>
           <div className="header-actions">
             <span className="header-title">Edit</span>
             <button 
               className="close-button"
-              onClick={() => {
-                onBlur(comment.id);
-                if (onClose) onClose();
-              }}
+              onClick={handleCancel}
             >
               ✕
             </button>
           </div>
         </div>
         <div className="comment-edit-container">
-          <div className="type-selector">
+          <div 
+            className="type-selector"
+            onContextMenu={handleTypeChange}
+            title="Right-click to cycle comment types"
+          >
             <select 
               className="comment-type-select"
-              value={comment.type || "technical"}
-              onChange={(e) => onTypeChange(comment.id, e.target.value.toLowerCase())}
+              value={localComment.type || "technical"}
+              onChange={(e) => setLocalComment(prev => ({
+                ...prev, 
+                type: e.target.value.toLowerCase()
+              }))}
               style={{ backgroundColor: currentCategory.color }}
             >
               <option value="technical">Technical</option>
@@ -78,56 +125,55 @@ const CommentBubble = ({
           </div>
           <textarea
             className="comment-textarea"
-            value={commentText}
-            onChange={(e) => onContentChange(comment.id, e.target.value)}
-            onBlur={() => onBlur(comment.id)}
+            value={localComment.text}
+            onChange={(e) => setLocalComment(prev => ({
+              ...prev, 
+              text: e.target.value
+            }))}
             autoFocus
             placeholder="Enter your comment..."
           />
+          <div className="comment-edit-actions">
+            <button 
+              className="save-button"
+              onClick={handleSave}
+            >
+              Save
+            </button>
+          </div>
         </div>
       </>
     );
-  } else if (isExpanded) {
-    // Expanded view mode (click once state - Image 2)
+  } else {
+    // View mode
     bubbleClass += " expanded";
     
     bubbleContent = (
       <>
-        <div className="comment-bubble-header">
+        <div 
+          className="comment-bubble-header"
+          onClick={handleClick}
+          onContextMenu={handleTypeChange}
+        >
           <div className="user-section">
-            <div className="user-icon"></div>
-            <span>User</span>
+            <img 
+              src={userAvatar} 
+              alt={userName} 
+              className="user-icon" 
+            />
+            <span>{userName}</span>
           </div>
-          <div className={`comment-type-pill ${comment.type}`} style={{backgroundColor: currentCategory.color}}>
+          <div 
+            className={`comment-type-pill ${localComment.type}`} 
+            style={{backgroundColor: currentCategory.color}}
+            title="Right-click to cycle comment types"
+          >
             {currentCategory.label}
           </div>
           <div className="header-actions">
-            <div className="type-dropdown-container">
-              <select
-                className="comment-type-dropdown"
-                value={comment.type || "technical"}
-                onChange={(e) => onTypeChange(comment.id, e.target.value.toLowerCase())}
-              >
-                <option value="technical">Technical</option>
-                <option value="conceptual">Conceptual</option>
-                <option value="details">Details</option>
-              </select>
-            </div>
-            <button 
-              className="edit-button"
-              onClick={() => {
-                // Switch to edit mode when edit button is clicked
-                if (setEditingComment) {
-                  setEditingComment(comment.id);
-                }
-              }}
-              title="Edit comment"
-            >
-              ✏️
-            </button>
             <button 
               className="delete-button"
-              onClick={() => onDelete(comment.id)}
+              onClick={() => onDelete(localComment.id)}
               title="Delete comment"
             >
               🗑️
@@ -142,32 +188,10 @@ const CommentBubble = ({
         </div>
         <div 
           className="comment-content"
-          onDoubleClick={() => {
-            // Switch to edit mode when content is double-clicked
-            if (setEditingComment) {
-              setEditingComment(comment.id);
-            }
-          }}
+          onClick={handleClick}
+          onContextMenu={handleTypeChange}
         >
-          {commentText || "No content provided"}
-        </div>
-      </>
-    );
-  } else {
-    // Hover state - Image 1 (simple info bubble)
-    bubbleClass += " hover-state";
-    
-    bubbleContent = (
-      <>
-        <div className="user-section">
-          <div className="user-icon"></div>
-          <span>User</span>
-        </div>
-        <div className={`comment-type-pill ${comment.type}`} style={{backgroundColor: currentCategory.color}}>
-          {currentCategory.label}
-        </div>
-        <div className="comment-text">
-          {commentText || "Comment"}
+          {localComment.text || "No content provided"}
         </div>
       </>
     );

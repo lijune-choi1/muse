@@ -79,8 +79,8 @@ const Leaderboard = () => {
   const renderFeaturedTab = () => (
     <div className="featured-content">
       <div className="featured-header">
-        <h2>Top Critiqued Posts</h2>
-        <p>Posts with the most feedback and discussions</p>
+        <h2>Urgent Critique</h2>
+        <p>Posts that need attention as soon as possible</p>
       </div>
       
       <div className="featured-posts-grid">
@@ -180,12 +180,7 @@ const Leaderboard = () => {
         >
           Featured Posts
         </button>
-        <button 
-          className={`tab-button ${activeTab === 'users' ? 'active' : ''}`}
-          onClick={() => setActiveTab('users')}
-        >
-          Top Users
-        </button>
+      
         <button 
           className={`tab-button ${activeTab === 'communities' ? 'active' : ''}`}
           onClick={() => setActiveTab('communities')}

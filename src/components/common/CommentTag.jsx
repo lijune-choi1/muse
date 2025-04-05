@@ -1,6 +1,4 @@
-// 1. First, update CommentTag.jsx to prevent event interference
-// src/components/common/CommentTag.jsx
-
+// Updated CommentTag.jsx
 import React from 'react';
 import './CommentTag.css';
 
@@ -11,14 +9,17 @@ const CommentTag = ({
   onDoubleClick, 
   onMouseEnter,
   onMouseLeave,
-  onLinkClick 
+  onLinkClick,
+  userProfile // New prop for user information
 }) => {
-  // Note: We removed onMouseDown from the props to prevent it from interfering with dragging
+  // Determine user information
+  const userName = userProfile?.name || "Anonymous";
+  const userAvatar = userProfile?.avatar || "/default-avatar.png";
   
   return (
     <div
       id={comment.id}
-      className={`comment-tag ${isSelected ? 'selected' : ''}`}
+      className={`comment-tag ${isSelected ? 'selected' : ''} ${comment.type}`}
       onClick={(e) => {
         e.stopPropagation();
         if (onClick) onClick(comment.id);
@@ -29,13 +30,21 @@ const CommentTag = ({
       }}
       onMouseEnter={() => onMouseEnter && onMouseEnter()}
       onMouseLeave={() => onMouseLeave && onMouseLeave()}
-      // Important: we do NOT add onMouseDown here to avoid conflicting with the draggable behavior
     >
       <div 
         className="comment-pin"
         style={{ backgroundColor: comment.color || "#ffb6c1" }}
       >
         <div className="comment-pin-inner"></div>
+      </div>
+      
+      {/* User avatar */}
+      <div className="comment-tag-user-info">
+        <img 
+          src={userAvatar} 
+          alt={userName} 
+          className="comment-tag-user-avatar" 
+        />
       </div>
       
       {/* Only show link button when selected */}

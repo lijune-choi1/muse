@@ -1,9 +1,8 @@
 // WhiteboardCanvas.jsx
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
 import CommentTag from '../common/CommentTag';
 import CommentBubble from '../common/CommentBubble';
 import CommentDraggable from '../common/CommentDraggeable';
-import CommentCategoryModal from '../common/CommentCategoryModal';
 import './WhiteboardCanvas.css';
 
 const WhiteboardCanvas = ({
@@ -26,187 +25,13 @@ const WhiteboardCanvas = ({
   const canvasRef = useRef();
   const [linkingMode, setLinkingMode] = useState(false);
   const [linkSourceId, setLinkSourceId] = useState(null);
-  const [showCategoryModal, setShowCategoryModal] = useState(false);
-  const [pendingCommentPosition, setPendingCommentPosition] = useState(null);
-
-  // Debug logging effect - MOVED TO COMPONENT LEVEL
-  useEffect(() => {
-    console.log('Comments rendering:', comments);
-    comments.forEach(comment => {
-      console.log('Individual Comment:', {
-        id: comment.id,
-        position: comment.position,
-        content: comment.content,
-        type: comment.type
-      });
-    });
-  }, [comments]);
-
-  // Function to position elements relative to the canvas, accounting for zoom
-  const getZoomedStyle = (position) => ({
-    position: 'absolute',
-    left: `${position.x}px`,
-    top: `${position.y}px`,
-    transform: `translate(-50%, -50%) scale(${1 / zoom})`,
-    transformOrigin: 'center center',
-    zIndex: 5,
-    pointerEvents: 'auto'
-  });
-
-  const handleDoubleClick = (e) => {
-    // Only proceed if we're in comment mode or select mode
-    if (mode !== 'comment' && mode !== 'select') return;
-    
-    const rect = canvasRef.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / zoom - pan.x;
-    const y = (e.clientY - rect.top) / zoom - pan.y;
-
-    // Store the position and show the category selection modal
-    setPendingCommentPosition({ x, y });
-    setShowCategoryModal(true);
-  };
-
-  // Create a new comment after category selection
-  const handleCategorySelected = (category) => {
-    if (!pendingCommentPosition) return;
-    
-    const categoryColors = {
-      'technical': '#ff4136',
-      'conceptual': '#0074D9',
-      'details': '#2ECC40'
-    };
-    
-    const basePoints = {
-      'technical': 5,
-      'conceptual': 7,
-      'details': 3
-    };
-    
-    // Create a new comment with the selected category
-    const newComment = {
-      id: `comment-${Date.now()}`,
-      content: '',
-      type: category,
-      points: basePoints[category] || 5,
-      position: pendingCommentPosition,
-      color: categoryColors[category] || '#ff4136',
-      links: []
-    };
-
-    if (onAddComment) {
-      console.log('✅ Creating comment with category:', category, newComment);
-      onAddComment(newComment);
-      
-      if (onCommentEdit) onCommentEdit(newComment.id);
-      if (onCommentSelect) onCommentSelect(newComment.id);
-      if (onCommentExpand) onCommentExpand(newComment.id);
-    }
-    
-    // Reset modal state
-    setShowCategoryModal(false);
-    setPendingCommentPosition(null);
-  };
-
-  // Cancel comment creation
-  const handleCancelCategorySelection = () => {
-    setShowCategoryModal(false);
-    setPendingCommentPosition(null);
-  };
-
-  // Handler for updating comment positions
-  const handleCommentPositionChange = (commentId, newPosition) => {
-    console.log(`Dragging comment ${commentId} to:`, newPosition);
-    
-    if (setComments) {
-      setComments(prevComments => {
-        const updatedComments = prevComments.map(comment => 
-          comment.id === commentId 
-            ? { ...comment, position: newPosition } 
-            : comment
-        );
-        return updatedComments;
-      });
-    }
-  };
-
-  // Handler for updating comment type
-  const handleCommentTypeChange = (commentId, newType) => {
-    const categoryColors = {
-      'technical': '#ff4136',
-      'conceptual': '#0074D9',
-      'details': '#2ECC40'
-    };
-    
-    const basePoints = {
-      'technical': 5,
-      'conceptual': 7,
-      'details': 3
-    };
-    
-    if (setComments) {
-      setComments(prevComments => {
-        return prevComments.map(comment => 
-          comment.id === commentId 
-            ? { 
-                ...comment, 
-                type: newType,
-                color: categoryColors[newType] || '#ff4136',
-                points: basePoints[newType] || 5
-              } 
-            : comment
-        );
-      });
-    }
-  };
-
-  // Create a link between comments
-  const handleCreateLink = (sourceId) => {
-    setLinkingMode(true);
-    setLinkSourceId(sourceId);
-  };
-
-  // Complete the link when a target is selected
-  const handleLinkComplete = (targetId) => {
-    if (!linkingMode || !linkSourceId || linkSourceId === targetId) {
-      setLinkingMode(false);
-      setLinkSourceId(null);
-      return;
-    }
-
-    console.log(`Creating link from ${linkSourceId} to ${targetId}`);
-    
-    setComments(prevComments => {
-      return prevComments.map(comment => {
-        if (comment.id === linkSourceId) {
-          // Add the target to the source's links if it doesn't already exist
-          const links = [...(comment.links || [])];
-          if (!links.includes(targetId)) {
-            links.push(targetId);
-          }
-          return { ...comment, links };
-        }
-        return comment;
-      });
-    });
-
-    // Reset linking mode
-    setLinkingMode(false);
-    setLinkSourceId(null);
-  };
-
-  // Handle comment selection based on the current mode
-  const handleCommentSelect = (commentId) => {
-    if (linkingMode) {
-      handleLinkComplete(commentId);
-    } else {
-      if (onCommentSelect) {
-        onCommentSelect(commentId);
-      }
-    }
-  };
+  
+  // New state for custom line drawing
+  const [isDrawingLine, setIsDrawingLine] = useState(false);
+  const [linePoints, setLinePoints] = useState([]);
 
   // Draw a line between two points
-  const drawLine = (start, end, color = "#555555", thickness = 2, dashed = false) => {
+const drawLine = (start, end, color = "#555555", thickness = 2, dashed = false) => {
     // Calculate control points for a curved line
     const midX = (start.x + end.x) / 2;
     const midY = (start.y + end.y) / 2;
@@ -226,13 +51,219 @@ const WhiteboardCanvas = ({
         fill="none"
         strokeDasharray={dashed ? "5,5" : ""}
         markerEnd="url(#arrowhead)"
+        className="link-line" // Added link-line class for animation
       />
     );
   };
 
+  // Handle comment click for linking or selection
+  const handleCommentClick = (clickedCommentId) => {
+    // If in linking mode
+    if (linkingMode) {
+      // If no source is selected, set this comment as the source
+      if (!linkSourceId) {
+        setLinkSourceId(clickedCommentId);
+        return;
+      }
+
+      // Prevent linking to the same comment
+      if (linkSourceId === clickedCommentId) {
+        return;
+      }
+
+      // Create the link
+      setComments(prevComments => {
+        return prevComments.map(comment => {
+          // Add link to the source comment
+          if (comment.id === linkSourceId) {
+            const updatedLinks = comment.links 
+              ? [...new Set([...comment.links, clickedCommentId])] 
+              : [clickedCommentId];
+            
+            return { 
+              ...comment, 
+              links: updatedLinks 
+            };
+          }
+          return comment;
+        });
+      });
+
+      // Reset linking mode
+      setLinkingMode(false);
+      setLinkSourceId(null);
+    } else {
+      // Normal comment selection if not in linking mode
+      onCommentSelect(clickedCommentId);
+    }
+  };
+
+  // Handle mouse down for line drawing
+  const handleMouseDown = (e) => {
+    if (!linkingMode) return;
+
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / zoom - pan.x;
+    const y = (e.clientY - rect.top) / zoom - pan.y;
+
+    setIsDrawingLine(true);
+    setLinePoints([{ x, y }]);
+  };
+
+  // Handle mouse move for line drawing
+  const handleMouseMove = (e) => {
+    if (!isDrawingLine || !linkingMode) return;
+
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / zoom - pan.x;
+    const y = (e.clientY - rect.top) / zoom - pan.y;
+
+    setLinePoints(prev => [...prev, { x, y }]);
+  };
+
+  // Handle mouse up to finalize line drawing
+  const handleMouseUp = (e) => {
+    if (!isDrawingLine || !linkingMode) return;
+
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / zoom - pan.x;
+    const y = (e.clientY - rect.top) / zoom - pan.y;
+
+    // Find nearest comment to the end point
+    const nearestComment = comments.reduce((nearest, comment) => {
+      const distance = Math.sqrt(
+        Math.pow(comment.position.x - x, 2) + 
+        Math.pow(comment.position.y - y, 2)
+      );
+      return distance < (nearest.distance || Infinity) 
+        ? { comment, distance } 
+        : nearest;
+    }, {}).comment;
+
+    // If we have a source comment and found a target comment
+    if (linkSourceId && nearestComment) {
+      setComments(prevComments => 
+        prevComments.map(comment => {
+          if (comment.id === linkSourceId) {
+            const updatedLinks = comment.links 
+              ? [...new Set([...comment.links, nearestComment.id])] 
+              : [nearestComment.id];
+            
+            return { 
+              ...comment, 
+              links: updatedLinks 
+            };
+          }
+          return comment;
+        })
+      );
+    }
+
+    // Reset drawing state
+    setIsDrawingLine(false);
+    setLinePoints([]);
+    setLinkingMode(false);
+    setLinkSourceId(null);
+  };
+
+  // Render custom drawn lines
+  const renderDrawnLine = () => {
+    if (linePoints.length < 2) return null;
+
+    const pathData = linePoints.reduce((path, point, index) => {
+      return index === 0 
+        ? `M ${point.x} ${point.y}` 
+        : `${path} L ${point.x} ${point.y}`;
+    }, '');
+
+    return (
+      <path
+        d={pathData}
+        stroke="#0066cc"
+        strokeWidth={2 / zoom}
+        fill="none"
+        strokeDasharray="5,5"
+      />
+    );
+  };
+
+  // Handle double-click to add comment
+  const handleDoubleClick = (e) => {
+    // Only proceed if we're in comment mode or select mode
+    if (mode !== 'comment' && mode !== 'select') return;
+    
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / zoom - pan.x;
+    const y = (e.clientY - rect.top) / zoom - pan.y;
+
+    // Create comment categories and colors
+    const categoryInfo = {
+      'technical': { color: '#ff4136', points: 5 },
+      'conceptual': { color: '#0074D9', points: 7 },
+      'details': { color: '#2ECC40', points: 3 }
+    };
+
+    // Default to technical if no preference
+    const defaultCategory = 'technical';
+    const { color, points } = categoryInfo[defaultCategory];
+
+    // Create a new comment with the default category
+    const newComment = {
+      id: `comment-${Date.now()}`,
+      content: '',
+      type: defaultCategory,
+      points: points,
+      position: { x, y },
+      color: color,
+      links: []
+    };
+
+    if (onAddComment) {
+      console.log('✅ Creating comment:', newComment);
+      onAddComment(newComment);
+      
+      // Automatically put the new comment into edit mode
+      if (onCommentEdit) onCommentEdit(newComment.id);
+      if (onCommentSelect) onCommentSelect(newComment.id);
+      if (onCommentExpand) onCommentExpand(newComment.id);
+    }
+  };
+
+  // Memoized link drawing to improve performance
+const linkLines = useMemo(() => {
+    const lines = [];
+    comments.forEach(sourceComment => {
+      if (sourceComment.links && sourceComment.links.length > 0) {
+        sourceComment.links.forEach(targetId => {
+          const targetComment = comments.find(c => c.id === targetId);
+          if (targetComment) {
+            // Determine line color based on comment types
+            const color = sourceComment.type === targetComment.type 
+              ? sourceComment.color  // Same type: use source color
+              : "#555555";  // Different type: neutral color
+  
+            lines.push(
+              <g key={`link-${sourceComment.id}-${targetId}`}>
+                {drawLine(
+                  sourceComment.position, 
+                  targetComment.position, 
+                  color
+                )}
+              </g>
+            );
+          }
+        });
+      }
+    });
+    return lines;
+  }, [comments, zoom]);
+
   return (
     <div
       ref={canvasRef}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
       onDoubleClick={handleDoubleClick}
       className="whiteboard-canvas"
       style={{
@@ -280,43 +311,11 @@ const WhiteboardCanvas = ({
           </marker>
         </defs>
         
-        {/* Draw all the links between comments */}
-        {comments.map(comment => {
-          if (!comment.links || comment.links.length === 0) return null;
-          
-          return comment.links.map(targetId => {
-            const targetComment = comments.find(c => c.id === targetId);
-            if (!targetComment) return null;
-            
-            return (
-              <g key={`link-${comment.id}-${targetId}`}>
-                {drawLine(comment.position, targetComment.position)}
-              </g>
-            );
-          });
-        })}
-        
-        {/* Draw the linking line when in linking mode */}
-        {linkingMode && linkSourceId && (
-          <g>
-            {(() => {
-              const sourceComment = comments.find(c => c.id === linkSourceId);
-              if (!sourceComment) return null;
-              
-              // Get mouse position for temporary line
-              const tempEnd = {
-                x: (hoveredCommentId && comments.find(c => c.id === hoveredCommentId)) 
-                  ? comments.find(c => c.id === hoveredCommentId).position.x 
-                  : sourceComment.position.x + 100,
-                y: (hoveredCommentId && comments.find(c => c.id === hoveredCommentId)) 
-                  ? comments.find(c => c.id === hoveredCommentId).position.y 
-                  : sourceComment.position.y
-              };
-              
-              return drawLine(sourceComment.position, tempEnd, "#0066cc", 2, true);
-            })()}
-          </g>
-        )}
+        {/* Render all link lines */}
+        {linkLines}
+
+        {/* Render custom drawn line */}
+        {isDrawingLine && renderDrawnLine()}
       </svg>
 
       {/* Comments with Draggable */}
@@ -326,7 +325,17 @@ const WhiteboardCanvas = ({
           <CommentDraggable
             key={`draggable-${comment.id}`}
             position={comment.position}
-            onPositionChange={(newPosition) => handleCommentPositionChange(comment.id, newPosition)}
+            onPositionChange={(newPosition) => {
+              if (setComments) {
+                setComments(prevComments => 
+                  prevComments.map(c => 
+                    c.id === comment.id 
+                      ? { ...c, position: newPosition } 
+                      : c
+                  )
+                );
+              }
+            }}
             zoomLevel={zoom}
             panOffset={pan}
             canvasRef={canvasRef}
@@ -335,11 +344,14 @@ const WhiteboardCanvas = ({
             <CommentTag
               comment={comment}
               isSelected={selectedCommentId === comment.id}
-              onClick={() => handleCommentSelect(comment.id)}
+              onClick={() => handleCommentClick(comment.id)}
               onDoubleClick={() => onCommentEdit(comment.id)}
               onMouseEnter={() => onCommentHover(comment.id)}
               onMouseLeave={() => onCommentHover(null)}
-              onLinkClick={() => handleCreateLink(comment.id)}
+              onLinkClick={() => {
+                setLinkingMode(true);
+                setLinkSourceId(comment.id);
+              }}
               isLinkSource={linkSourceId === comment.id}
               isLinkingMode={linkingMode}
             />
@@ -363,8 +375,8 @@ const WhiteboardCanvas = ({
                 comment={comment}
                 isExpanded={expandedCommentId === comment.id}
                 isEditing={editingCommentId === comment.id}
+                userProfile={comment.user}
                 onContentChange={(id, val) => {
-                  // Handler for content change
                   if (setComments) {
                     setComments(prevComments => 
                       prevComments.map(c => 
@@ -375,16 +387,41 @@ const WhiteboardCanvas = ({
                 }}
                 setEditingComment={onCommentEdit}
                 onBlur={() => {
-                  // Handle blur event
                   if (editingCommentId) {
                     onCommentEdit(null);
                   }
                 }}
-                onTypeChange={(id, type) => handleCommentTypeChange(id, type)}
-                onDelete={(id) => {
-                  // Handler for delete
+                onTypeChange={(id, type) => {
+                  const categoryColors = {
+                    'technical': '#ff4136',
+                    'conceptual': '#0074D9',
+                    'details': '#2ECC40'
+                  };
+                  
+                  const basePoints = {
+                    'technical': 5,
+                    'conceptual': 7,
+                    'details': 3
+                  };
+                  
                   if (setComments) {
-                    // First, remove any links to this comment
+                    setComments(prevComments => {
+                      return prevComments.map(comment => 
+                        comment.id === id 
+                          ? { 
+                              ...comment, 
+                              type: type,
+                              color: categoryColors[type] || '#ff4136',
+                              points: basePoints[type] || 5
+                            } 
+                          : comment
+                      );
+                    });
+                  }
+                }}
+                onDelete={(id) => {
+                  if (setComments) {
+                    // Remove links to this comment
                     setComments(prevComments => {
                       const updatedComments = prevComments.map(c => {
                         if (c.links && c.links.includes(id)) {
@@ -396,7 +433,7 @@ const WhiteboardCanvas = ({
                         return c;
                       });
                       
-                      // Then remove the comment itself
+                      // Remove the comment itself
                       return updatedComments.filter(c => c.id !== id);
                     });
                     
@@ -430,28 +467,6 @@ const WhiteboardCanvas = ({
           }}
         >
           Click on a comment to create a link
-        </div>
-      )}
-
-      {/* Category selection modal */}
-      {showCategoryModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 1000,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          pointerEvents: 'auto'
-        }}>
-          <CommentCategoryModal 
-            onSelect={handleCategorySelected}
-            onCancel={handleCancelCategorySelection}
-          />
         </div>
       )}
     </div>

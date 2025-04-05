@@ -57,13 +57,13 @@ const ReactionButtons = ({ postId, initialLikes = 0, initialHearts = 0 }) => {
         className={`reaction-btn ${isLiked ? 'active' : ''}`}
         onClick={handleLikeClick}
       >
-        {isLiked ? '✓ Liked' : 'Like'} <span className="reaction-count">{likes}</span>
+        {isLiked ? '✓ Needs Work' : 'Needs Work'} <span className="reaction-count">{likes}</span>
       </button>
       <button 
         className={`reaction-btn ${isHearted ? 'active' : ''}`}
         onClick={handleHeartClick}
       >
-        {isHearted ? '❤️ Hearted' : 'Hearts'} <span className="reaction-count">{hearts}</span>
+        {isHearted ? '❤️ Finished' : 'Finished'} <span className="reaction-count">{hearts}</span>
       </button>
     </div>
   );

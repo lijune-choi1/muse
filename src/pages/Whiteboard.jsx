@@ -1,7 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import WhiteboardCanvas from '../components/whiteboard/WhiteboardCanvas';
-import CommentCategoryModal from '../components/common/CommentCategoryModal';
 import critiqueService from './CritiqueService';
 import './Whiteboard.css';
 
@@ -28,6 +27,50 @@ const Whiteboard = () => {
   const [expandedCommentId, setExpandedCommentId] = useState(null);
   const [hoveredCommentId, setHoveredCommentId] = useState(null);
   const [score, setScore] = useState({ technical: 0, conceptual: 0, details: 0, total: 0 });
+
+  // Calculate points based on comment links
+  const calculateLinkPoints = (comments) => {
+    const counts = { technical: 0, conceptual: 0, details: 0 };
+    let total = 0;
+
+    comments.forEach((comment) => {
+      if (!comment.type) return;
+
+      const commentType = comment.type.toLowerCase();
+      const basePoints = comment.points || 0;
+
+      // Initialize link point multiplier
+      let linkMultiplier = 1;
+
+      // Check links and calculate multiplier
+      if (comment.links && comment.links.length > 0) {
+        const linkedComments = comment.links.map(
+          linkId => comments.find(c => c.id === linkId)
+        ).filter(Boolean); // Remove any undefined links
+
+        const matchingColorLinks = linkedComments.filter(
+          linkedComment => linkedComment.type.toLowerCase() === commentType
+        );
+
+        if (matchingColorLinks.length > 0) {
+          // Same color links multiply points by 2
+          linkMultiplier = 2;
+        } else if (linkedComments.length > 0) {
+          // Different color links multiply points by 3
+          linkMultiplier = 3;
+        }
+      }
+
+      // Calculate points with multiplier
+      const calculatedPoints = basePoints * linkMultiplier;
+
+      // Update counts and total
+      counts[commentType]++;
+      total += calculatedPoints;
+    });
+
+    return { ...counts, total };
+  };
 
   // Load post and whiteboard data
   useEffect(() => {
@@ -91,17 +134,8 @@ const Whiteboard = () => {
 
   // Update score when comments change
   useEffect(() => {
-    const counts = { technical: 0, conceptual: 0, details: 0 };
-    let total = 0;
-    
-    comments.forEach((c) => {
-      if (c.type && ['technical', 'conceptual', 'details'].includes(c.type.toLowerCase())) {
-        counts[c.type.toLowerCase()]++;
-        total += c.points || 0;
-      }
-    });
-    
-    setScore({ ...counts, total });
+    const newScore = calculateLinkPoints(comments);
+    setScore(newScore);
   }, [comments]);
   
   // Debug: Log comments
@@ -240,13 +274,6 @@ const Whiteboard = () => {
         <button className="zoom-button" onClick={resetZoom}>↺</button>
       </div>
 
-      {/* Add comment button */}
-      <button 
-        className="fab-button"
-        onClick={() => setMode('comment')}
-      >
-        ＋
-      </button>
 
       {/* Back button */}
       <button 

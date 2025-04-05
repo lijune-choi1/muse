@@ -152,7 +152,7 @@ const CritiqueCard = ({
             aria-label={isLiked ? "Unlike" : "Like"}
             title={isLiked ? "Unlike" : "Like"}
           >
-            {isLiked ? '✓ Liked' : 'Like'} <span className="critique-card-reaction-count">{likes}</span>
+            {isLiked ? '✓ Needs Work' : 'Needs Work'} <span className="critique-card-reaction-count">{likes}</span>
           </button>
           <button 
             className={`critique-card-reaction-btn ${isHearted ? 'active' : ''}`}
@@ -160,7 +160,7 @@ const CritiqueCard = ({
             aria-label={isHearted ? "Remove heart" : "Heart"}
             title={isHearted ? "Remove heart" : "Heart"}
           >
-            {isHearted ? '❤️ Hearted' : 'Hearts'} <span className="critique-card-reaction-count">{hearts}</span>
+            {isHearted ? 'Finished' : 'Finished'} <span className="critique-card-reaction-count">{hearts}</span>
           </button>
         </div>
         

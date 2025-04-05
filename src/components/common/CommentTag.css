@@ -102,3 +102,30 @@
   border: none;
   padding: 0 2px;
 }
+
+/* Additional CSS for user info in CommentTag.css */
+.comment-tag {
+  position: relative; /* Ensure proper positioning for child elements */
+}
+
+.comment-tag-user-info {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+}
+
+.comment-tag-user-avatar {
+  max-width: 10px;
+  max-height: 10px;
+  border-radius: 50%;
+  border: 2px solid white;
+  object-fit: cover;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* Adjust tag positioning to make room for avatar */
+.comment-tag {
+  margin-top: 12px;
+}

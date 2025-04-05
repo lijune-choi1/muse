@@ -20,9 +20,9 @@ const Navbar = () => {
       <div className="navbar">
         <div className="navbar-brand">
           <Link to="/" className="navbar-title-link">
-            <h1 className="navbar-title">Muse</h1>
+            <h1 className="navbar-title">muse</h1>
           </Link>
-          <span className="navbar-subtitle">making design critique + funding available for everyone :)</span>
+          <span className="navbar-subtitle">ver Beta1.1</span>
         </div>
         <div className="navbar-actions">
           <Button variant="primary" onClick={handleCreatePost}>Create Critique Post</Button>
