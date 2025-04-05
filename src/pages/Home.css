@@ -1,76 +1,113 @@
-/* src/pages/Home.css */
 .home-title {
-    font-size: 1.875rem;
-    font-weight: 700;
-    margin-bottom: 2rem;
-  }
-  
-  .trending-section-title {
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin-bottom: 1.5rem;
-  }
-  
+  font-size: 1.875rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+}
+
+.trending-section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+
+.critiques-grid {
+  margin-top: 48px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
   .critiques-grid {
-    display: grid;
-    grid-template-columns: repeat(1, 1fr);
-    gap: 1.5rem;
+    grid-template-columns: repeat(3, 1fr);
+    margin-bottom:20px;
   }
-  
-  @media (min-width: 768px) {
-    .critiques-grid {
-      grid-template-columns: repeat(3, 1fr);
-    }
+}
+
+.critique-card {
+  border: 1px solid #eaeaea;
+  border-radius: 0.25rem;
+  padding: 1rem;
+
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.community-info {
+  display: flex;
+  align-items: center;
+}
+
+.community-name {
+  font-weight: 500;
+}
+
+.post-date {
+  font-size: 0.875rem;
+  color: #666;
+  margin-left: 0.5rem;
+}
+
+.card-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.card-description {
+  color: #555;
+  margin-bottom: 1rem;
+}
+
+.card-image {
+  background-color: #f5f5f5;
+  height: 12rem;
+  width: 100%;
+  margin-bottom: 1rem;
+  border-radius:8px;
+
+}
+
+.card-actions {
+  display: flex;
+  justify-content: space-between;
+}
+
+.home-title {
+  font-size: 1.875rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+}
+
+.trending-section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+
+.critiques-grid {
+  margin-top: 48px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .critiques-grid {
+    grid-template-columns: repeat(3, 1fr);
+    margin-bottom: 20px;
   }
-  
-  .critique-card {
-    border: 1px solid #eaeaea;
-    border-radius: 0.25rem;
-    padding: 1rem;
-  }
-  
-  .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-  }
-  
-  .community-info {
-    display: flex;
-    align-items: center;
-  }
-  
-  .community-name {
-    font-weight: 500;
-  }
-  
-  .post-date {
-    font-size: 0.875rem;
-    color: #666;
-    margin-left: 0.5rem;
-  }
-  
-  .card-title {
-    font-size: 1.125rem;
-    font-weight: 700;
-    margin-bottom: 0.5rem;
-  }
-  
-  .card-description {
-    color: #555;
-    margin-bottom: 1rem;
-  }
-  
-  .card-image {
-    background-color: #f5f5f5;
-    height: 12rem;
-    width: 100%;
-    margin-bottom: 1rem;
-  }
-  
-  .card-actions {
-    display: flex;
-    justify-content: space-between;
-  }
-  
+}
+
+.critique-card {
+  border: 1px solid #eaeaea;
+  border-radius: 0.25rem;
+  padding: 1rem;
+  background-color: white;
+  transition: transform 0.2s, box-shadow 0.2s;
+}

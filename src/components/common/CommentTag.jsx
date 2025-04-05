@@ -1,4 +1,6 @@
+// 1. First, update CommentTag.jsx to prevent event interference
 // src/components/common/CommentTag.jsx
+
 import React from 'react';
 import './CommentTag.css';
 
@@ -7,30 +9,27 @@ const CommentTag = ({
   isSelected, 
   onClick, 
   onDoubleClick, 
-  onMouseDown,
   onMouseEnter,
   onMouseLeave,
   onLinkClick 
 }) => {
+  // Note: We removed onMouseDown from the props to prevent it from interfering with dragging
+  
   return (
     <div
       id={comment.id}
       className={`comment-tag ${isSelected ? 'selected' : ''}`}
-      style={{
-        left: `${comment.position.x}px`,
-        top: `${comment.position.y}px`
-      }}
       onClick={(e) => {
         e.stopPropagation();
-        onClick(comment.id);
+        if (onClick) onClick(comment.id);
       }}
       onDoubleClick={(e) => {
         e.stopPropagation();
-        onDoubleClick(comment.id);
+        if (onDoubleClick) onDoubleClick(comment.id);
       }}
-      onMouseDown={(e) => onMouseDown(e, comment.id)}
       onMouseEnter={() => onMouseEnter && onMouseEnter()}
       onMouseLeave={() => onMouseLeave && onMouseLeave()}
+      // Important: we do NOT add onMouseDown here to avoid conflicting with the draggable behavior
     >
       <div 
         className="comment-pin"

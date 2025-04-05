@@ -1,61 +1,121 @@
-// src/pages/Explore.jsx
-import React from 'react';
-import './Explore.css';
+// src/pages/Explore.jsx - without duplicate navigation elements
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import './Explore.css'; // Reuse Home.css styles
 
-const CritiqueCard = ({ onEnterClick }) => {
-  return (
-    <div className="critique-room-card">
-      <div className="card-header">
-        <div className="avatar-circle"></div>
-        <div className="card-title">CRITIQUE NAME</div>
-      </div>
-      <div className="card-stats">
-        <div className="stat-group">
-          <div className="stat-value">20</div>
-          <div className="stat-label">Posts</div>
-        </div>
-        <div className="stat-group">
-          <div className="stat-value">10</div>
-          <div className="stat-label">Followers</div>
-        </div>
-      </div>
-      <div className="card-description">
-        This is a critique room.
-      </div>
-      <div className="card-actions">
-        <button 
-          className="enter-button"
-          onClick={onEnterClick}
-        >
-          Enter Critique
-        </button>
-      </div>
-    </div>
-  );
-};
+// Default hardcoded communities to show if service fails
+const DEFAULT_COMMUNITIES = [
+  {
+    id: 1,
+    name: 'r/ijuneneedshelp',
+    description: 'Community board for Iijune to get feedback for design',
+    createdDate: 'Mar 13, 2024',
+    visibility: 'Public',
+    stats: {
+      members: 20,
+      online: 10
+    }
+  },
+  {
+    id: 2,
+    name: 'r/Graphic4ever',
+    description: 'A community for graphic designers to share and critique professional work',
+    createdDate: 'Jan 15, 2024',
+    visibility: 'Public',
+    stats: {
+      members: 50,
+      online: 25
+    }
+  }
+];
 
 const Explore = () => {
-  const handleEnterClick = () => {
-    console.log('Enter critique clicked');
-    // Navigation logic here
+  const [communities, setCommunities] = useState(DEFAULT_COMMUNITIES);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCommunities = async () => {
+      try {
+        setLoading(true);
+        
+        // Try to import CritiqueService dynamically
+        try {
+          const critiqueServiceModule = await import('../pages/CritiqueService');
+          const critiqueService = critiqueServiceModule.default;
+          
+          const allCommunities = await critiqueService.getAllCommunities();
+          if (allCommunities && allCommunities.length > 0) {
+            setCommunities(allCommunities);
+          }
+        } catch (importError) {
+          console.error("Error importing CritiqueService:", importError);
+          // Fallback to default communities
+          setCommunities(DEFAULT_COMMUNITIES);
+        }
+      } catch (error) {
+        console.error('Error fetching communities:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCommunities();
+  }, []);
+
+  // Current user - in a real app would come from auth context
+  const currentUser = 'lijune.choi20';
+
+  const handleJoinCommunity = async (communityId) => {
+    try {
+      // Try to import CritiqueService dynamically
+      const critiqueServiceModule = await import('../pages/CritiqueService');
+      const critiqueService = critiqueServiceModule.default;
+      
+      await critiqueService.followCommunity(currentUser, communityId);
+      alert(`Joined community #${communityId}`);
+    } catch (error) {
+      console.error('Error joining community:', error);
+    }
   };
 
   return (
-    <div className="explore-container">
-      <h1 className="explore-title">Explore</h1>
+    // Removed the outer layout divs that included Navbar and Sidebar
+    <div className="main-content">
+      <h1 className="explore-title">Explore Communities</h1>
       
-      <div className="explore-section">
-        <h2 className="section-title">Top Trending Critique Rooms</h2>
-        
-        <div className="critiques-room-grid">
-          {[...Array(8)].map((_, index) => (
-            <CritiqueCard 
-              key={index}
-              onEnterClick={handleEnterClick}
-            />
+      {loading ? (
+        <div>Loading communities...</div>
+      ) : communities.length > 0 ? (
+        <div className="communities-grid">
+          {communities.map(community => (
+            <div key={community.id} className="community-card">
+              <div className="community-card-header">
+                <h2>{community.name}</h2>
+                <span className="community-members">{community.stats?.members || 0} members</span>
+              </div>
+              <p className="community-description">{community.description}</p>
+              <div className="community-card-footer">
+                <Link to={`/community/${community.name.replace('r/', '')}`} className="view-community-btn">
+                  View
+                </Link>
+                <button 
+                  className="join-community-btn"
+                  onClick={() => handleJoinCommunity(community.id)}
+                >
+                  Join
+                </button>
+              </div>
+            </div>
           ))}
         </div>
-      </div>
+      ) : (
+        <div className="no-communities-message">
+          <p>No communities found. Be the first to create one!</p>
+          <Link to="/create-critique-room" className="create-community-btn">
+            Create Community
+          </Link>
+        </div>
+      )}
     </div>
   );
 };

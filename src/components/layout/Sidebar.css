@@ -19,8 +19,16 @@
   }
   .sidebar-item {
     list-style:none;
-    height:40px;
     padding:0;
+    padding: 8px;
+
+  }
+
+  .sidebar-item:hover {
+    background-color:#d8d1bd;
+    border-radius:100px;
+    width:fit-content;
+    transition: ease-in 1s;
 
   }
   
@@ -50,3 +58,21 @@
     text-transform: uppercase;
     margin-bottom: 1rem;
   }
+
+  svg{
+    color:rgb(188, 188, 188);
+  }
+  
+  .sidebar-create-btn{
+margin-bottom:20px;
+padding: 8px 8px 8px 8px;
+  }
+
+  .sidebar-create-btn:hover{
+    background-color:#d8d1bd;
+    border-radius:100px;
+    width:fit-content;
+    transition: ease-in 1s;
+      }
+    
+  

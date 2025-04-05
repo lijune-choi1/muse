@@ -11,17 +11,33 @@ const CommentBubble = ({
   onTypeChange, 
   onDelete,
   onClose,
-  setEditingComment  // Add this prop
+  setEditingComment
 }) => {
   // Different states based on props
   let bubbleContent;
   let bubbleClass = "comment-bubble";
   
-  // Position calculation (adjusted to appear beside the tag)
-  const positionStyle = {
-    left: `${comment.position.x + 30}px`,
-    top: `${comment.position.y - 20}px`
+  // Handle either text or content property for backward compatibility
+  const commentText = comment.content || comment.text || "";
+
+  // Category colors and labels
+  const categoryInfo = {
+    'technical': {
+      color: '#ff4136',
+      label: 'Technical'
+    },
+    'conceptual': {
+      color: '#0074D9',
+      label: 'Conceptual'
+    },
+    'details': {
+      color: '#2ECC40',
+      label: 'Details'
+    }
   };
+
+  // Get current category info or default to technical
+  const currentCategory = categoryInfo[comment.type?.toLowerCase()] || categoryInfo.technical;
 
   if (isEditing) {
     // Edit mode - Image 2 (expanded with edit controls)
@@ -51,18 +67,18 @@ const CommentBubble = ({
           <div className="type-selector">
             <select 
               className="comment-type-select"
-              value={comment.type}
-              onChange={(e) => onTypeChange(comment.id, e.target.value.toUpperCase())}
-              style={{ backgroundColor: comment.color }}
+              value={comment.type || "technical"}
+              onChange={(e) => onTypeChange(comment.id, e.target.value.toLowerCase())}
+              style={{ backgroundColor: currentCategory.color }}
             >
               <option value="technical">Technical</option>
-              <option value="details">Details</option>
               <option value="conceptual">Conceptual</option>
+              <option value="details">Details</option>
             </select>
           </div>
           <textarea
             className="comment-textarea"
-            value={comment.content || ""}
+            value={commentText}
             onChange={(e) => onContentChange(comment.id, e.target.value)}
             onBlur={() => onBlur(comment.id)}
             autoFocus
@@ -82,10 +98,21 @@ const CommentBubble = ({
             <div className="user-icon"></div>
             <span>User</span>
           </div>
-          <div className="comment-type-pill" style={{backgroundColor: comment.color}}>
-            {comment.type}
+          <div className={`comment-type-pill ${comment.type}`} style={{backgroundColor: currentCategory.color}}>
+            {currentCategory.label}
           </div>
           <div className="header-actions">
+            <div className="type-dropdown-container">
+              <select
+                className="comment-type-dropdown"
+                value={comment.type || "technical"}
+                onChange={(e) => onTypeChange(comment.id, e.target.value.toLowerCase())}
+              >
+                <option value="technical">Technical</option>
+                <option value="conceptual">Conceptual</option>
+                <option value="details">Details</option>
+              </select>
+            </div>
             <button 
               className="edit-button"
               onClick={() => {
@@ -122,7 +149,7 @@ const CommentBubble = ({
             }
           }}
         >
-          {comment.content || "Lorem Ipsum Lorem Ipsum"}
+          {commentText || "No content provided"}
         </div>
       </>
     );
@@ -136,11 +163,11 @@ const CommentBubble = ({
           <div className="user-icon"></div>
           <span>User</span>
         </div>
-        <div className="comment-type-pill" style={{backgroundColor: comment.color}}>
-          {comment.type}
+        <div className={`comment-type-pill ${comment.type}`} style={{backgroundColor: currentCategory.color}}>
+          {currentCategory.label}
         </div>
         <div className="comment-text">
-          {comment.content || "Comment"}
+          {commentText || "Comment"}
         </div>
       </>
     );
@@ -149,7 +176,6 @@ const CommentBubble = ({
   return (
     <div 
       className={bubbleClass} 
-      style={positionStyle}
       onClick={(e) => e.stopPropagation()}
     >
       {bubbleContent}

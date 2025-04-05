@@ -48,7 +48,7 @@ const WhiteboardSidebar = ({
                 <span>Details: {commentTypeStats.details.toString().padStart(2, '0')} points</span>
               </div>
               <div className="total-points">
-                <span>TOTAL POINTS</span>
+                <span>TOTAL POINTS: {totalPoints}</span>
               </div>
             </div>
           </div>

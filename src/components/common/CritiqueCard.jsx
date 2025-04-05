@@ -1,50 +1,184 @@
-// src/components/common/CritiqueCard.jsx
-import React from 'react';
-import Card from './Card';
-import Button from './Button';
-import './Button.css';
+// src/components/common/CritiqueCard.jsx - with ReactionService
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import UserAvatar from './UserAvatar';
+import reactionService from './ReactService';
+import './CritiqueCard.css';
 
-
-const CritiqueCard = ({ 
-  community, 
-  date, 
-  title = "POST NAME: I need help with my poster design.", 
-  description = "Hi, I am doing an assignment for Type II and I need help with my poster design. I think the composition is off but I am not too sure... Any advice?", 
+const CritiqueCard = ({
+  id,
+  community,
+  author,
+  date,
+  title,
+  description,
+  editNumber,
+  status,
   image,
-  onEnterClick, 
-  onEditClick
+  onEditClick,
+  isThread = false,
+  initialLikes = 10,
+  initialHearts = 5
 }) => {
+  // State for tracking reactions
+  const [likes, setLikes] = useState(0);
+  const [hearts, setHearts] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isHearted, setIsHearted] = useState(false);
+  
+  // Current user - in a real app would come from auth context
+  const currentUser = 'lijune.choi20';
+  
+  useEffect(() => {
+    // Initialize the post with default reaction counts if it doesn't exist yet
+    reactionService.initializePost(id, initialLikes, initialHearts);
+    
+    // Get current reaction counts
+    const { likes, hearts } = reactionService.getReactionCounts(id);
+    setLikes(likes);
+    setHearts(hearts);
+    
+    // Get user's reaction status
+    const { hasLiked, hasHearted } = reactionService.getUserReactions(currentUser, id);
+    setIsLiked(hasLiked);
+    setIsHearted(hasHearted);
+  }, [id, initialLikes, initialHearts, currentUser]);
+  
+  // Handle like button click
+  const handleLikeClick = () => {
+    const { hasLiked, likesCount } = reactionService.toggleLike(currentUser, id);
+    setIsLiked(hasLiked);
+    setLikes(likesCount);
+  };
+  
+  // Handle heart button click
+  const handleHeartClick = () => {
+    const { hasHearted, heartsCount } = reactionService.toggleHeart(currentUser, id);
+    setIsHearted(hasHearted);
+    setHearts(heartsCount);
+  };
+
+  // Extract author from props or fallback to community name without the "r/" prefix
+  const displayAuthor = author || (community ? community.replace(/^r\//, '') : 'unknown');
+
+  // Status labels
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case 'just-started':
+        return 'Just Started';
+      case 'in-progress':
+        return 'In Progress';
+      case 'near-completion':
+        return 'Near Completion';
+      case 'done':
+        return 'Done';
+      default:
+        return status;
+    }
+  };
+
+  // Status background colors
+  const getStatusBackgroundColor = (status) => {
+    switch (status) {
+      case 'just-started':
+        return '#2196F3';
+      case 'in-progress':
+        return '#FFC107';
+      case 'near-completion':
+        return '#4CAF50';
+      case 'done':
+        return '#9C27B0';
+      default:
+        return '#aaaaaa';
+    }
+  };
+
+  // Function to get ordinal suffix for edit numbers
+  const getEditLabel = (num) => {
+    if (!num) return '1st Edit';
+    if (num === 1) return '1st Edit';
+    if (num === 2) return '2nd Edit';
+    if (num === 3) return '3rd Edit';
+    return `${num}th Edit`;
+  };
+
   return (
-    <Card>
-      <div className="card-header">
-        <div className="community-info">
-          <span className="community-name">{community}</span>
-          <span className="post-date">{date}</span>
+    <div className="critique-card-container">
+      {/* Card Header with user avatar, community name, and date */}
+      <div className="critique-card-header">
+        <div className="critique-card-user">
+          <UserAvatar 
+            username={displayAuthor}
+            size="small"
+          />
+          <span className="critique-card-community">{community}</span>
         </div>
-        <Button variant="primary" onClick={onEnterClick}>Enter Critique</Button>
+        <span className="critique-card-date">{date}</span>
+        {isThread && <div className="critique-card-thread-badge">THREAD</div>}
       </div>
-      
-      <div className="edit-action">
-        <Button variant="secondary" onClick={onEditClick}>2nd Edit</Button>
-      </div>
-      
-      <h3 className="card-title">{title}</h3>
-      <p className="card-description">{description}</p>
-      
-      {image ? (
-        <div className="card-image">
-          <img src={image} alt={title} />
+
+      {/* Status badges */}
+      <div className="critique-card-badges">
+        <div className="critique-card-status-badge" style={{ backgroundColor: getStatusBackgroundColor(status) }}>
+          {getStatusLabel(status)}
         </div>
-      ) : (
-        <div className="card-image"></div>
-      )}
-      
-      <div className="card-actions">
-        <Button variant="action">Likes</Button>
-        <Button variant="action">Comments</Button>
-        <Button variant="action">Share</Button>
+        <div className="critique-card-edit-badge">
+          {getEditLabel(editNumber)}
+        </div>
       </div>
-    </Card>
+
+      {/* Title and description */}
+      <h3 className="critique-card-title">{title}</h3>
+      <p className="critique-card-description">{description}</p>
+
+      {/* Image */}
+      <div className="critique-card-image-container">
+        <img 
+          src={image} 
+          alt={title} 
+          className="critique-card-image"
+          onError={(e) => {
+            e.target.src = `/api/placeholder/600/400`;
+          }}
+        />
+      </div>
+
+      {/* Action buttons */}
+      <div className="critique-card-actions">
+        <div className="critique-card-reactions">
+          <button 
+            className={`critique-card-reaction-btn ${isLiked ? 'active' : ''}`}
+            onClick={handleLikeClick}
+            aria-label={isLiked ? "Unlike" : "Like"}
+            title={isLiked ? "Unlike" : "Like"}
+          >
+            {isLiked ? '✓ Liked' : 'Like'} <span className="critique-card-reaction-count">{likes}</span>
+          </button>
+          <button 
+            className={`critique-card-reaction-btn ${isHearted ? 'active' : ''}`}
+            onClick={handleHeartClick}
+            aria-label={isHearted ? "Remove heart" : "Heart"}
+            title={isHearted ? "Remove heart" : "Heart"}
+          >
+            {isHearted ? '❤️ Hearted' : 'Hearts'} <span className="critique-card-reaction-count">{hearts}</span>
+          </button>
+        </div>
+        
+        <Link 
+          to={`/whiteboard/${id}`}
+          className="critique-card-enter-btn"
+          onClick={(e) => {
+            if (onEditClick) {
+              e.preventDefault();
+              onEditClick(id);
+              window.location.href = `/whiteboard/${id}`;
+            }
+          }}
+        >
+          Enter Critique
+        </Link>
+      </div>
+    </div>
   );
 };
 
