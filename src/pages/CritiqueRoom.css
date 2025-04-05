@@ -50,9 +50,9 @@
   
   .community-sidebar-container {
     width: 280px;
-    background-color: white;
+    background-color: rgb(250, 245, 233);
     border-radius: 8px;
-    border: 1px solid #e0e0e0;
+    /* border: 1px solid #e0e0e0; */
     padding: 1.5rem;
     height: fit-content;
     position: sticky;
