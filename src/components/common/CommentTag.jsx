@@ -1,4 +1,4 @@
-// Updated CommentTag.jsx
+// Simplified CommentTag.jsx
 import React from 'react';
 import './CommentTag.css';
 
@@ -10,11 +10,26 @@ const CommentTag = ({
   onMouseEnter,
   onMouseLeave,
   onLinkClick,
-  userProfile // New prop for user information
+  userProfile 
 }) => {
   // Determine user information
   const userName = userProfile?.name || "Anonymous";
-  const userAvatar = userProfile?.avatar || "/default-avatar.png";
+  const userInitial = userName.charAt(0).toUpperCase();
+  
+  // Get color for comment type
+  const getColorForType = (type) => {
+    switch(type?.toLowerCase()) {
+      case 'technical': return '#ff4136';
+      case 'conceptual': return '#0074D9';
+      case 'details': return '#2ECC40';
+      default: return '#ff4136'; // Default to technical red
+    }
+  };
+  
+  const commentColor = comment.color || getColorForType(comment.type);
+  
+  // Count links if they exist
+  const linkCount = comment.links?.length || 0;
   
   return (
     <div
@@ -28,24 +43,20 @@ const CommentTag = ({
         e.stopPropagation();
         if (onDoubleClick) onDoubleClick(comment.id);
       }}
-      onMouseEnter={() => onMouseEnter && onMouseEnter()}
+      onMouseEnter={() => onMouseEnter && onMouseEnter(comment.id)}
       onMouseLeave={() => onMouseLeave && onMouseLeave()}
     >
       <div 
         className="comment-pin"
-        style={{ backgroundColor: comment.color || "#ffb6c1" }}
+        style={{ backgroundColor: commentColor }}
       >
-        <div className="comment-pin-inner"></div>
+        <span className="user-initial">{userInitial}</span>
       </div>
       
-      {/* User avatar */}
-      <div className="comment-tag-user-info">
-        <img 
-          src={userAvatar} 
-          alt={userName} 
-          className="comment-tag-user-avatar" 
-        />
-      </div>
+      {/* Show link count badge if comment has links */}
+      {linkCount > 0 && (
+        <div className="link-counter">{linkCount}</div>
+      )}
       
       {/* Only show link button when selected */}
       {isSelected && onLinkClick && (
@@ -55,7 +66,7 @@ const CommentTag = ({
             e.stopPropagation();
             onLinkClick(comment.id);
           }}
-          title="Create link from this comment"
+          title="Link to another comment"
         >
           🔗
         </button>

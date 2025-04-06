@@ -19,6 +19,11 @@ const Whiteboard = () => {
   const [zoomLevel, setZoomLevel] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   
+  // Collaboration testing states
+  const [collaborationEnabled, setCollaborationEnabled] = useState(false);
+  const [collaborationMode, setCollaborationMode] = useState('full');
+  const [useCollaborativeComments, setUseCollaborativeComments] = useState(false);
+  
   // Comment state
   const [comments, setComments] = useState([]);
   const [stamps, setStamps] = useState([]);
@@ -37,7 +42,7 @@ const Whiteboard = () => {
       if (!comment.type) return;
 
       const commentType = comment.type.toLowerCase();
-      const basePoints = comment.points || 0;
+      const basePoints = comment.points || 1;
 
       // Initialize link point multiplier
       let linkMultiplier = 1;
@@ -49,7 +54,7 @@ const Whiteboard = () => {
         ).filter(Boolean); // Remove any undefined links
 
         const matchingColorLinks = linkedComments.filter(
-          linkedComment => linkedComment.type.toLowerCase() === commentType
+          linkedComment => linkedComment.type?.toLowerCase() === commentType
         );
 
         if (matchingColorLinks.length > 0) {
@@ -61,18 +66,25 @@ const Whiteboard = () => {
         }
       }
 
-      // Calculate points with multiplier
-      const calculatedPoints = basePoints * linkMultiplier;
+      // Add bonus for comments with high agreement
+      let agreementBonus = 0;
+      if (comment.reactions && comment.reactions.agreed > 0) {
+        // Each agreement adds 0.5 points
+        agreementBonus = comment.reactions.agreed * 0.5;
+      }
+
+      // Calculate points with multiplier and bonus
+      const calculatedPoints = (basePoints * linkMultiplier) + agreementBonus;
 
       // Update counts and total
       counts[commentType]++;
       total += calculatedPoints;
     });
 
-    return { ...counts, total };
+    return { ...counts, total: Math.round(total) };
   };
 
-  // Load post and whiteboard data
+  // Load initial data
   useEffect(() => {
     const loadData = async () => {
       if (!postId) return;
@@ -88,15 +100,44 @@ const Whiteboard = () => {
         if (postData?.image) {
           setImageUrl(postData.image);
         } else {
-          setImageUrl(`/api/placeholder/${600 + (postData.id % 10)}/${400 + (postData.id % 20)}`);
+          setImageUrl(`/api/placeholder/${600 + (postData?.id % 10 || 0)}/${400 + (postData?.id % 20 || 0)}`);
         }
         
         // Load whiteboard data
         const whiteboardData = await critiqueService.getWhiteboardData(parseInt(postId));
-        console.log('Loaded Whiteboard Data:', whiteboardData);
         
+        // Initialize comments with some defaults
+        let processedComments = [];
         if (whiteboardData.comments && whiteboardData.comments.length > 0) {
-          setComments(whiteboardData.comments);
+          processedComments = whiteboardData.comments.map(comment => ({
+            ...comment,
+            reactions: comment.reactions || { agreed: 0, disagreed: 0 },
+            replies: comment.replies || [],
+            links: comment.links || []
+          }));
+          setComments(processedComments);
+        } else {
+          // If no comments, add some sample comments
+          setComments([
+            {
+              id: 'sample-comment-1',
+              position: { x: 100, y: 100 },
+              type: 'technical',
+              text: 'Sample technical comment',
+              reactions: { agreed: 0, disagreed: 0 },
+              replies: [],
+              links: []
+            },
+            {
+              id: 'sample-comment-2',
+              position: { x: 300, y: 200 },
+              type: 'conceptual',
+              text: 'Sample conceptual comment',
+              reactions: { agreed: 0, disagreed: 0 },
+              replies: [],
+              links: []
+            }
+          ]);
         }
         
         if (whiteboardData.stamps && whiteboardData.stamps.length > 0) {
@@ -112,75 +153,11 @@ const Whiteboard = () => {
     loadData();
   }, [postId]);
 
-  // Save whiteboard data when it changes
-  useEffect(() => {
-    const saveData = async () => {
-      if (!postId || loading) return;
-      if (comments.length === 0 && stamps.length === 0) return;
-      
-      try {
-        await critiqueService.saveWhiteboardData(parseInt(postId), {
-          comments,
-          stamps
-        });
-        console.log('Saved whiteboard data for post:', postId);
-      } catch (error) {
-        console.error("Error saving whiteboard data:", error);
-      }
-    };
-    
-    saveData();
-  }, [comments, stamps, postId, loading]);
-
   // Update score when comments change
   useEffect(() => {
     const newScore = calculateLinkPoints(comments);
     setScore(newScore);
   }, [comments]);
-  
-  // Debug: Log comments
-  useEffect(() => {
-    console.log('Current Comments:', comments);
-  }, [comments]);
-
-  // Add a new comment
-  const handleAddComment = (newComment) => {
-    console.log('Adding new comment:', newComment);
-    setComments(prev => [...prev, newComment]);
-    
-    // Auto-select and expand the new comment
-    setSelectedCommentId(newComment.id);
-    setEditingCommentId(newComment.id);
-    setExpandedCommentId(newComment.id);
-  };
-
-  // Add a new stamp
-  const handleAddStamp = (newStamp) => {
-    setStamps(prev => [...prev, newStamp]);
-  };
-
-  // Canvas mouse event handling
-  const handleCanvasMouseDown = (e) => {
-    if (e.button !== 0) return;
-    
-    // Clear selections when clicking empty canvas
-    if (e.target === canvasRef.current || e.target.classList.contains('whiteboard-placeholder')) {
-      setSelectedCommentId(null);
-      setEditingCommentId(null);
-      setExpandedCommentId(null);
-      setHoveredCommentId(null);
-    }
-  };
-
-  // Zoom controls
-  const zoomIn = () => setZoomLevel(prev => Math.min(prev * 1.2, 3));
-  const zoomOut = () => setZoomLevel(prev => Math.max(prev / 1.2, 0.5));
-  const resetZoom = () => setZoomLevel(1);
-  
-  // Pan controls
-  const panBy = (dx, dy) => {
-    setPan(prev => ({ x: prev.x + dx, y: prev.y + dy }));
-  };
 
   if (loading) {
     return (
@@ -212,23 +189,64 @@ const Whiteboard = () => {
         </div>
       </div>
 
-      {/* Goal indicator */}
-      <div className="goal-container">
-        <span className="goal-label">Goal</span>
-        <span className="comment-count">{comments.length} comments</span>
+      {/* Collaboration control panel */}
+      <div 
+        style={{
+          position: 'absolute', 
+          top: '10px', 
+          right: '10px', 
+          backgroundColor: 'white',
+          padding: '10px',
+          borderRadius: '5px',
+          boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+          zIndex: 100
+        }}
+      >
+        <h4>Collaboration Controls</h4>
+        <div>
+          <label>
+            <input 
+              type="checkbox" 
+              checked={collaborationEnabled}
+              onChange={() => setCollaborationEnabled(!collaborationEnabled)}
+            />
+            Enable Collaboration
+          </label>
+        </div>
+        {collaborationEnabled && (
+          <>
+            <div>
+              <label>
+                Collaboration Mode:
+                <select 
+                  value={collaborationMode}
+                  onChange={(e) => setCollaborationMode(e.target.value)}
+                >
+                  <option value="full">Full</option>
+                  <option value="limited">Limited</option>
+                  <option value="view-only">View Only</option>
+                </select>
+              </label>
+            </div>
+            <div>
+              <label>
+                <input 
+                  type="checkbox" 
+                  checked={useCollaborativeComments}
+                  onChange={() => setUseCollaborativeComments(!useCollaborativeComments)}
+                />
+                Collaborative Comments
+              </label>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Main canvas */}
-      <div 
-        className="canvas-wrapper" 
-        ref={canvasRef} 
-        onMouseDown={handleCanvasMouseDown}
-      >
-        {/* This is the important part - use WhiteboardCanvas component */}
+      <div className="canvas-wrapper" ref={canvasRef}>
         <WhiteboardCanvas
           zoom={zoomLevel}
           pan={pan}
-          onAddComment={handleAddComment}
           comments={comments}
           selectedCommentId={selectedCommentId}
           editingCommentId={editingCommentId}
@@ -241,6 +259,10 @@ const Whiteboard = () => {
           onCommentHover={setHoveredCommentId}
           setComments={setComments}
           imageUrl={imageUrl}
+          // Collaboration props
+          collaborationEnabled={collaborationEnabled}
+          collaborationMode={collaborationMode}
+          useCollaborativeComments={useCollaborativeComments}
         />
       </div>
 
@@ -266,14 +288,22 @@ const Whiteboard = () => {
         </button>
       </div>
 
+      {/* Add comment button */}
+      <button 
+        className="fab-button"
+        onClick={() => setMode('comment')}
+        title="Add Comment"
+      >
+        +
+      </button>
+
       {/* Zoom controls */}
       <div className="zoom-controls">
-        <button className="zoom-button" onClick={zoomIn}>+</button>
+        <button className="zoom-button" onClick={() => setZoomLevel(prev => Math.min(prev * 1.2, 3))}>+</button>
         <div className="zoom-value">{Math.round(zoomLevel * 100)}%</div>
-        <button className="zoom-button" onClick={zoomOut}>−</button>
-        <button className="zoom-button" onClick={resetZoom}>↺</button>
+        <button className="zoom-button" onClick={() => setZoomLevel(prev => Math.max(prev / 1.2, 0.5))}>−</button>
+        <button className="zoom-button" onClick={() => setZoomLevel(1)}>↺</button>
       </div>
-
 
       {/* Back button */}
       <button 
@@ -286,4 +316,4 @@ const Whiteboard = () => {
   );
 };
 
-export default Whiteboard;
+export default Whiteboard

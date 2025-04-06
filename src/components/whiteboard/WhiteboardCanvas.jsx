@@ -1,474 +1,1127 @@
-// WhiteboardCanvas.jsx
-import React, { useRef, useState, useEffect, useMemo } from 'react';
+// src/components/whiteboard/WhiteboardCanvas.jsx
+import React, { useRef, useEffect, useState } from 'react';
 import CommentTag from '../common/CommentTag';
 import CommentBubble from '../common/CommentBubble';
-import CommentDraggable from '../common/CommentDraggeable';
-import './WhiteboardCanvas.css';
+import CommentLinking from '../common/CommentLinking';
+import commentService from '../common/CommentService';
+import CollaborativeCommentBubble from '../common/CollaborativeCommentBubble';
 
 const WhiteboardCanvas = ({
-  zoom,
-  pan,
-  onAddComment,
+  zoom, 
+  pan, 
+  imageUrl,
   comments,
   selectedCommentId,
-  editingCommentId,
   expandedCommentId,
   hoveredCommentId,
-  mode,
+  setComments,
   onCommentSelect,
-  onCommentEdit,
   onCommentExpand,
   onCommentHover,
-  setComments,
-  imageUrl
+  mode,
+  // New collaboration props
+  collaborationEnabled = false,
+  useCollaborativeComments = false
 }) => {
-  const canvasRef = useRef();
+  const canvasRef = useRef(null);
+  const [canvasDimensions, setCanvasDimensions] = useState({ width: 0, height: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [localPan, setLocalPan] = useState({ x: pan.x, y: pan.y });
+  const [links, setLinks] = useState([]);
   const [linkingMode, setLinkingMode] = useState(false);
-  const [linkSourceId, setLinkSourceId] = useState(null);
+  const [linkingSourceId, setLinkingSourceId] = useState(null);
   
-  // New state for custom line drawing
-  const [isDrawingLine, setIsDrawingLine] = useState(false);
-  const [linePoints, setLinePoints] = useState([]);
+  // State for dragging comments
+  const [draggedCommentId, setDraggedCommentId] = useState(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  
+  // Collaboration states
+  const [localCursor, setLocalCursor] = useState({ x: 0, y: 0, visible: false });
+  const [guestCursor, setGuestCursor] = useState({ x: 300, y: 200, visible: collaborationEnabled });
+  const [guestActivity, setGuestActivity] = useState(null);
+  const [isGuestPresent, setIsGuestPresent] = useState(false);
 
-  // Draw a line between two points
-const drawLine = (start, end, color = "#555555", thickness = 2, dashed = false) => {
-    // Calculate control points for a curved line
-    const midX = (start.x + end.x) / 2;
-    const midY = (start.y + end.y) / 2;
-    
-    // Add a slight curve to the line
-    const curveOffset = 30; 
-    const controlPoint = {
-      x: midX,
-      y: midY - curveOffset
-    };
-    
-    return (
-      <path
-        d={`M ${start.x} ${start.y} Q ${controlPoint.x} ${controlPoint.y} ${end.x} ${end.y}`}
-        stroke={color}
-        strokeWidth={thickness / zoom} // Scale stroke width with zoom
-        fill="none"
-        strokeDasharray={dashed ? "5,5" : ""}
-        markerEnd="url(#arrowhead)"
-        className="link-line" // Added link-line class for animation
-      />
-    );
+  // For simulating guest interactions
+  const [guestCommentBeingEdited, setGuestCommentBeingEdited] = useState(null);
+  const [guestPath, setGuestPath] = useState([]);
+  const [isPlayingGuestPath, setIsPlayingGuestPath] = useState(false);
+  const [pathPlaybackIndex, setPathPlaybackIndex] = useState(0);
+  
+  // Mock user profile - in a real app, this would come from auth context
+  const userProfile = {
+    name: "Jane Doe",
+    avatar: "/path/to/avatar.jpg"
+  };
+  
+  const guestProfile = {
+    name: "Guest User",
+    avatar: "/path/to/guest-avatar.jpg"
   };
 
-  // Handle comment click for linking or selection
-  const handleCommentClick = (clickedCommentId) => {
-    // If in linking mode
-    if (linkingMode) {
-      // If no source is selected, set this comment as the source
-      if (!linkSourceId) {
-        setLinkSourceId(clickedCommentId);
-        return;
-      }
-
-      // Prevent linking to the same comment
-      if (linkSourceId === clickedCommentId) {
-        return;
-      }
-
-      // Create the link
-      setComments(prevComments => {
-        return prevComments.map(comment => {
-          // Add link to the source comment
-          if (comment.id === linkSourceId) {
-            const updatedLinks = comment.links 
-              ? [...new Set([...comment.links, clickedCommentId])] 
-              : [clickedCommentId];
-            
-            return { 
-              ...comment, 
-              links: updatedLinks 
-            };
-          }
-          return comment;
+  // Initialize guest presence
+  useEffect(() => {
+    if (collaborationEnabled) {
+      setIsGuestPresent(true);
+      setGuestCursor({ x: 300, y: 200, visible: true });
+      
+      // Simulate a guest cursor path
+      const centerX = canvasDimensions.width / 2 || 400;
+      const centerY = canvasDimensions.height / 2 || 300;
+      const radius = 150;
+      const newPath = [];
+      
+      // Create a circular path with timestamps
+      for (let i = 0; i < 100; i++) {
+        const angle = (i / 100) * Math.PI * 2;
+        newPath.push({
+          x: centerX + Math.cos(angle) * radius,
+          y: centerY + Math.sin(angle) * radius,
+          timestamp: Date.now() + (i * 30) // 30ms between points
         });
-      });
-
-      // Reset linking mode
-      setLinkingMode(false);
-      setLinkSourceId(null);
-    } else {
-      // Normal comment selection if not in linking mode
-      onCommentSelect(clickedCommentId);
+      }
+      
+      setGuestPath(newPath);
     }
-  };
+  }, [collaborationEnabled, canvasDimensions.width, canvasDimensions.height]);
 
-  // Handle mouse down for line drawing
-  const handleMouseDown = (e) => {
-    if (!linkingMode) return;
+  // Sync local pan with prop pan
+  useEffect(() => {
+    setLocalPan({ x: pan.x, y: pan.y });
+  }, [pan]);
 
-    const rect = canvasRef.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / zoom - pan.x;
-    const y = (e.clientY - rect.top) / zoom - pan.y;
-
-    setIsDrawingLine(true);
-    setLinePoints([{ x, y }]);
-  };
-
-  // Handle mouse move for line drawing
-  const handleMouseMove = (e) => {
-    if (!isDrawingLine || !linkingMode) return;
-
-    const rect = canvasRef.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / zoom - pan.x;
-    const y = (e.clientY - rect.top) / zoom - pan.y;
-
-    setLinePoints(prev => [...prev, { x, y }]);
-  };
-
-  // Handle mouse up to finalize line drawing
-  const handleMouseUp = (e) => {
-    if (!isDrawingLine || !linkingMode) return;
-
-    const rect = canvasRef.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / zoom - pan.x;
-    const y = (e.clientY - rect.top) / zoom - pan.y;
-
-    // Find nearest comment to the end point
-    const nearestComment = comments.reduce((nearest, comment) => {
-      const distance = Math.sqrt(
-        Math.pow(comment.position.x - x, 2) + 
-        Math.pow(comment.position.y - y, 2)
-      );
-      return distance < (nearest.distance || Infinity) 
-        ? { comment, distance } 
-        : nearest;
-    }, {}).comment;
-
-    // If we have a source comment and found a target comment
-    if (linkSourceId && nearestComment) {
-      setComments(prevComments => 
-        prevComments.map(comment => {
-          if (comment.id === linkSourceId) {
-            const updatedLinks = comment.links 
-              ? [...new Set([...comment.links, nearestComment.id])] 
-              : [nearestComment.id];
-            
-            return { 
-              ...comment, 
-              links: updatedLinks 
-            };
-          }
-          return comment;
-        })
-      );
-    }
-
-    // Reset drawing state
-    setIsDrawingLine(false);
-    setLinePoints([]);
-    setLinkingMode(false);
-    setLinkSourceId(null);
-  };
-
-  // Render custom drawn lines
-  const renderDrawnLine = () => {
-    if (linePoints.length < 2) return null;
-
-    const pathData = linePoints.reduce((path, point, index) => {
-      return index === 0 
-        ? `M ${point.x} ${point.y}` 
-        : `${path} L ${point.x} ${point.y}`;
-    }, '');
-
-    return (
-      <path
-        d={pathData}
-        stroke="#0066cc"
-        strokeWidth={2 / zoom}
-        fill="none"
-        strokeDasharray="5,5"
-      />
-    );
-  };
-
-  // Handle double-click to add comment
-  const handleDoubleClick = (e) => {
-    // Only proceed if we're in comment mode or select mode
-    if (mode !== 'comment' && mode !== 'select') return;
-    
-    const rect = canvasRef.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / zoom - pan.x;
-    const y = (e.clientY - rect.top) / zoom - pan.y;
-
-    // Create comment categories and colors
-    const categoryInfo = {
-      'technical': { color: '#ff4136', points: 5 },
-      'conceptual': { color: '#0074D9', points: 7 },
-      'details': { color: '#2ECC40', points: 3 }
+  // Update canvas dimensions on resize
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (canvasRef.current) {
+        setCanvasDimensions({
+          width: canvasRef.current.clientWidth,
+          height: canvasRef.current.clientHeight
+        });
+      }
     };
 
-    // Default to technical if no preference
-    const defaultCategory = 'technical';
-    const { color, points } = categoryInfo[defaultCategory];
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+    
+    return () => window.removeEventListener('resize', updateDimensions);
+  }, []);
 
-    // Create a new comment with the default category
+  // Extract links from comments on update
+  useEffect(() => {
+    const extractLinks = () => {
+      const newLinks = [];
+      
+      comments.forEach(comment => {
+        if (comment.links && comment.links.length > 0) {
+          comment.links.forEach(targetId => {
+            const targetComment = comments.find(c => c.id === targetId);
+            
+            if (targetComment) {
+              newLinks.push({
+                id: `link-${comment.id}-${targetId}`,
+                source: comment.id,
+                target: targetId,
+                sourceType: comment.type,
+                targetType: targetComment.type
+              });
+            }
+          });
+        }
+      });
+      
+      setLinks(newLinks);
+    };
+    
+    extractLinks();
+  }, [comments]);
+
+  // Add document-level event listeners for comment dragging
+  useEffect(() => {
+    if (draggedCommentId) {
+      const handleMouseMove = (e) => {
+        if (!draggedCommentId) return;
+        
+        // Get mouse position relative to canvas
+        const rect = canvasRef.current.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        
+        // Calculate new position accounting for the initial drag offset
+        const newPosition = {
+          x: (mouseX - dragOffset.x - localPan.x) / zoom,
+          y: (mouseY - dragOffset.y - localPan.y) / zoom
+        };
+        
+        // Update comment position
+        setComments(prevComments => 
+          prevComments.map(comment => 
+            comment.id === draggedCommentId 
+              ? { ...comment, position: newPosition } 
+              : comment
+          )
+        );
+      };
+      
+      const handleMouseUp = () => {
+        setDraggedCommentId(null);
+      };
+      
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [draggedCommentId, dragOffset, zoom, localPan, setComments]);
+
+  // Guest cursor simulation
+  useEffect(() => {
+    if (!collaborationEnabled || !isGuestPresent || guestPath.length === 0) return;
+    
+    // After 3 seconds, start moving the guest cursor along a path
+    const timer = setTimeout(() => {
+      setIsPlayingGuestPath(true);
+      setPathPlaybackIndex(0);
+      setGuestActivity('Guest is viewing the whiteboard...');
+      
+      setTimeout(() => {
+        setGuestActivity(null);
+      }, 3000);
+    }, 3000);
+    
+    return () => clearTimeout(timer);
+  }, [collaborationEnabled, isGuestPresent, guestPath]);
+  
+  // Guest cursor path playback
+  useEffect(() => {
+    if (!isPlayingGuestPath || guestPath.length === 0) return;
+    
+    let playbackTimer = null;
+    
+    const playNext = () => {
+      if (pathPlaybackIndex >= guestPath.length) {
+        setIsPlayingGuestPath(false);
+        
+        // After path is finished, simulate the guest adding a comment
+        setTimeout(() => {
+          if (Math.random() > 0.5) {
+            simulateGuestAddingComment();
+          } else {
+            // Start the path again
+            setIsPlayingGuestPath(true);
+            setPathPlaybackIndex(0);
+          }
+        }, 2000);
+        return;
+      }
+      
+      // Update guest cursor position
+      setGuestCursor({ 
+        ...guestPath[pathPlaybackIndex],
+        visible: true 
+      });
+      
+      // Calculate delay until next position
+      let delay = 16; // Default to ~60fps
+      if (pathPlaybackIndex < guestPath.length - 1) {
+        const currentTime = guestPath[pathPlaybackIndex].timestamp;
+        const nextTime = guestPath[pathPlaybackIndex + 1].timestamp;
+        delay = nextTime - currentTime;
+      }
+      
+      // Schedule next position update
+      setPathPlaybackIndex(prev => prev + 1);
+      playbackTimer = setTimeout(playNext, delay);
+    };
+    
+    // Start playback
+    playNext();
+    
+    return () => {
+      clearTimeout(playbackTimer);
+    };
+  }, [isPlayingGuestPath, pathPlaybackIndex, guestPath]);
+
+  // Simulate guest adding a comment
+  const simulateGuestAddingComment = () => {
+    // Get the current guest cursor position
+    const x = (guestCursor.x - localPan.x) / zoom;
+    const y = (guestCursor.y - localPan.y) / zoom;
+    
+    setGuestActivity('Guest is adding a comment...');
+    
+    // After a short delay, create the comment
+    setTimeout(() => {
+      const newComment = {
+        id: `guest-comment-${Date.now()}`,
+        position: { x, y },
+        type: ['technical', 'conceptual', 'details'][Math.floor(Math.random() * 3)],
+        text: 'This area needs attention',
+        reactions: { agreed: 0, disagreed: 0 },
+        replies: [],
+        links: [],
+        points: 1,
+        author: 'Guest User',
+        guestCreated: true
+      };
+      
+      setComments(prev => [...prev, newComment]);
+      commentService.saveComment(newComment);
+      
+      setGuestCommentBeingEdited(newComment.id);
+      setGuestActivity('Guest is editing their comment...');
+      
+      // After another delay, update the comment
+      setTimeout(() => {
+        setComments(prev => 
+          prev.map(comment => 
+            comment.id === newComment.id 
+              ? { ...comment, text: 'I think we should review this part of the design in more detail.' } 
+              : comment
+          )
+        );
+        
+        commentService.updateCommentContent(
+          newComment.id, 
+          'I think we should review this part of the design in more detail.'
+        );
+        
+        setGuestActivity('Guest finished editing');
+        setGuestCommentBeingEdited(null);
+        
+        // Clear status after a moment
+        setTimeout(() => {
+          setGuestActivity(null);
+          
+          // Return to path mode
+          setTimeout(() => {
+            setIsPlayingGuestPath(true);
+            setPathPlaybackIndex(0);
+          }, 2000);
+        }, 2000);
+      }, 4000);
+    }, 2000);
+  };
+
+  // Handle canvas panning with mouse drag
+  const handleMouseDown = (e) => {
+    // Only use middle button (wheel) or right button for panning
+    if (e.button === 1 || e.button === 2) {
+      e.preventDefault();
+      setIsDragging(true);
+      setDragStart({ x: e.clientX, y: e.clientY });
+    }
+  };
+
+  const handleMouseMove = (e) => {
+    // Update local cursor position for collaboration features
+    if (collaborationEnabled && canvasRef.current) {
+      const rect = canvasRef.current.getBoundingClientRect();
+      setLocalCursor({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+        visible: true
+      });
+    }
+    
+    if (!isDragging) return;
+    
+    const dx = e.clientX - dragStart.x;
+    const dy = e.clientY - dragStart.y;
+    
+    // Update local pan state (properly through React state)
+    setLocalPan(prev => ({
+      x: prev.x + dx,
+      y: prev.y + dy
+    }));
+    
+    setDragStart({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+  
+  const handleMouseEnter = () => {
+    if (collaborationEnabled) {
+      setLocalCursor(prev => ({ ...prev, visible: true }));
+    }
+  };
+  
+  const handleMouseLeave = () => {
+    if (collaborationEnabled) {
+      setLocalCursor(prev => ({ ...prev, visible: false }));
+    }
+  };
+
+  // Start dragging a comment
+  const handleCommentDragStart = (e, commentId) => {
+    e.stopPropagation();
+    
+    if (e.button !== 0) return; // Only left mouse button
+    
+    // Find the comment
+    const comment = comments.find(c => c.id === commentId);
+    if (!comment) return;
+    
+    // Get mouse position relative to canvas
+    const rect = canvasRef.current.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    
+    // Calculate the offset from the mouse to the comment position
+    const commentX = comment.position.x * zoom + localPan.x;
+    const commentY = comment.position.y * zoom + localPan.y;
+    
+    setDraggedCommentId(commentId);
+    setDragOffset({
+      x: commentX - mouseX,
+      y: commentY - mouseY
+    });
+    
+    // Select the comment
+    onCommentSelect(commentId);
+    
+    // Simulate guest reaction to drag
+    if (collaborationEnabled && isGuestPresent && comment.guestCreated) {
+      setGuestActivity('Guest notices you moving their comment...');
+      
+      setTimeout(() => {
+        setGuestActivity(null);
+      }, 2000);
+    }
+  };
+
+  // Canvas mouse event handling
+  const handleCanvasClick = (e) => {
+    if (linkingMode) {
+      // If in linking mode, clicking on empty canvas cancels linking
+      handleCancelLinking();
+      return;
+    }
+    
+    if (mode === 'comment') {
+      // Handle comment placement
+      const rect = canvasRef.current.getBoundingClientRect();
+      const screenX = e.clientX - rect.left;
+      const screenY = e.clientY - rect.top;
+      
+      // Convert screen coordinates to canvas coordinates
+      const x = (screenX - localPan.x) / zoom;
+      const y = (screenY - localPan.y) / zoom;
+      
+      const newComment = {
+        id: `comment-${Date.now()}`,
+        position: { x, y },
+        type: 'technical', // Default type
+        text: '',
+        reactions: { agreed: 0, disagreed: 0 },
+        replies: [],
+        links: [],
+        points: 1
+      };
+      
+      setComments(prev => [...prev, newComment]);
+      commentService.saveComment(newComment);
+      
+      // Select and expand the new comment
+      onCommentSelect(newComment.id);
+      onCommentExpand(newComment.id);
+      
+      // Simulate guest reaction to new comment
+      if (collaborationEnabled && isGuestPresent) {
+        setGuestActivity('Guest sees your new comment...');
+        
+        // Move guest cursor to the new comment
+        setGuestCursor({
+          x: screenX + 50, // Offset to the right
+          y: screenY - 30, // Offset upward
+          visible: true
+        });
+        
+        setTimeout(() => {
+          setGuestActivity(null);
+        }, 3000);
+      }
+    }
+  };
+  
+  // Handle double-click to create comment regardless of mode
+  const handleCanvasDoubleClick = (e) => {
+    // Don't create comment if in linking mode
+    if (linkingMode) return;
+    
+    // Only create comment if clicking directly on the canvas or image
+    if (e.target !== canvasRef.current && 
+        !e.target.classList.contains('whiteboard-image') &&
+        !e.target.classList.contains('canvas-wrapper')) {
+      return;
+    }
+    
+    // Get screen coordinates
+    const rect = canvasRef.current.getBoundingClientRect();
+    const screenX = e.clientX - rect.left;
+    const screenY = e.clientY - rect.top;
+    
+    // Convert to canvas coordinates
+    const x = (screenX - localPan.x) / zoom;
+    const y = (screenY - localPan.y) / zoom;
+    
+    // Create a new comment
     const newComment = {
       id: `comment-${Date.now()}`,
-      content: '',
-      type: defaultCategory,
-      points: points,
       position: { x, y },
-      color: color,
-      links: []
+      type: 'technical', // Default type
+      text: '',
+      reactions: { agreed: 0, disagreed: 0 },
+      replies: [],
+      links: [],
+      points: 1
     };
-
-    if (onAddComment) {
-      console.log('✅ Creating comment:', newComment);
-      onAddComment(newComment);
-      
-      // Automatically put the new comment into edit mode
-      if (onCommentEdit) onCommentEdit(newComment.id);
-      if (onCommentSelect) onCommentSelect(newComment.id);
-      if (onCommentExpand) onCommentExpand(newComment.id);
-    }
+    
+    setComments(prev => [...prev, newComment]);
+    commentService.saveComment(newComment);
+    
+    // Select and expand the new comment
+    onCommentSelect(newComment.id);
+    onCommentExpand(newComment.id);
+    
+    // Prevent default browser behavior
+    e.preventDefault();
   };
 
-  // Memoized link drawing to improve performance
-const linkLines = useMemo(() => {
-    const lines = [];
-    comments.forEach(sourceComment => {
-      if (sourceComment.links && sourceComment.links.length > 0) {
-        sourceComment.links.forEach(targetId => {
-          const targetComment = comments.find(c => c.id === targetId);
-          if (targetComment) {
-            // Determine line color based on comment types
-            const color = sourceComment.type === targetComment.type 
-              ? sourceComment.color  // Same type: use source color
-              : "#555555";  // Different type: neutral color
-  
-            lines.push(
-              <g key={`link-${sourceComment.id}-${targetId}`}>
-                {drawLine(
-                  sourceComment.position, 
-                  targetComment.position, 
-                  color
-                )}
-              </g>
-            );
-          }
-        });
+  // Handle comment selection
+  const handleCommentClick = (e, commentId) => {
+    // Don't select if we're starting a drag
+    if (e.button === 0 && e.target.closest('.comment-tag')) {
+      e.stopPropagation();
+    }
+    
+    if (linkingMode) {
+      // In linking mode, clicking selects the target
+      return;
+    }
+    
+    onCommentSelect(commentId);
+    onCommentExpand(commentId);
+    
+    // Simulate guest following your selection
+    if (collaborationEnabled && isGuestPresent) {
+      const comment = comments.find(c => c.id === commentId);
+      if (comment && comment.guestCreated) {
+        setGuestActivity('Guest notices you opened their comment');
+        
+        setTimeout(() => {
+          setGuestActivity(null);
+        }, 2000);
       }
+    }
+  };
+  
+  // Handle content change
+  const handleContentChange = (commentId, newContent) => {
+    setComments(prevComments => 
+      prevComments.map(comment => 
+        comment.id === commentId 
+          ? { ...comment, text: newContent } 
+          : comment
+      )
+    );
+    
+    commentService.updateCommentContent(commentId, newContent);
+    
+    // Simulate guest reaction to content change
+    if (collaborationEnabled && isGuestPresent) {
+      const comment = comments.find(c => c.id === commentId);
+      if (comment && comment.guestCreated) {
+        setGuestActivity('Guest sees you editing their comment...');
+        
+        setTimeout(() => {
+          setGuestActivity(null);
+        }, 2000);
+      }
+    }
+  };
+  
+  // Handle type change
+  const handleTypeChange = (commentId, newType) => {
+    setComments(prevComments => 
+      prevComments.map(comment => 
+        comment.id === commentId 
+          ? { ...comment, type: newType } 
+          : comment
+      )
+    );
+    
+    commentService.updateCommentType(commentId, newType);
+  };
+  
+  // Handle comment deletion
+  const handleDeleteComment = (commentId) => {
+    // Check if it's a guest comment
+    const isGuestComment = comments.find(c => c.id === commentId)?.guestCreated;
+    
+    // Remove links to/from this comment
+    setComments(prevComments => {
+      // First create a new array without the deleted comment
+      const filteredComments = prevComments.filter(comment => comment.id !== commentId);
+      
+      // Then update any comments that had links to the deleted comment
+      return filteredComments.map(comment => {
+        if (comment.links && comment.links.includes(commentId)) {
+          return {
+            ...comment,
+            links: comment.links.filter(id => id !== commentId)
+          };
+        }
+        return comment;
+      });
     });
-    return lines;
-  }, [comments, zoom]);
+    
+    commentService.deleteComment(commentId);
+    
+    // Clear selection if deleted comment was selected
+    if (selectedCommentId === commentId) {
+      onCommentSelect(null);
+    }
+    if (expandedCommentId === commentId) {
+      onCommentExpand(null);
+    }
+    
+    // Simulate guest reaction to deleting their comment
+    if (collaborationEnabled && isGuestPresent && isGuestComment) {
+      setGuestActivity('Guest noticed you deleted their comment!');
+      
+      setTimeout(() => {
+        setGuestActivity(null);
+      }, 3000);
+    }
+  };
+  
+  // Handle comment close
+  const handleCloseBubble = () => {
+    onCommentExpand(null);
+  };
+  
+  // Handle reaction change
+  const handleReactionChange = (commentId, reactionData) => {
+    setComments(prevComments => 
+      prevComments.map(comment => 
+        comment.id === commentId 
+          ? { 
+              ...comment, 
+              reactions: reactionData.reactions,
+              userReacted: reactionData.userReacted  
+            } 
+          : comment
+      )
+    );
+    
+    commentService.updateCommentReactions(
+      commentId, 
+      reactionData.reactions, 
+      reactionData.userReacted,
+      userProfile.name // Use username as userId
+    );
+    
+    // Simulate guest reacting to your reaction
+    if (collaborationEnabled && isGuestPresent) {
+      const comment = comments.find(c => c.id === commentId);
+      if (comment && comment.guestCreated) {
+        setTimeout(() => {
+          setGuestActivity('Guest is reacting to your feedback...');
+          
+          setTimeout(() => {
+            // Guest adds another reaction
+            const newReactions = { ...reactionData.reactions };
+            if (reactionData.userReacted === 'agreed') {
+              // Guest also agrees
+              newReactions.agreed++;
+            } else {
+              // Guest agrees even if you disagreed
+              newReactions.agreed++;
+            }
+            
+            setComments(prevComments => 
+              prevComments.map(comment => 
+                comment.id === commentId 
+                  ? { 
+                      ...comment, 
+                      reactions: newReactions
+                    } 
+                  : comment
+              )
+            );
+            
+            setGuestActivity('Guest also reacted');
+            
+            setTimeout(() => {
+              setGuestActivity(null);
+            }, 2000);
+          }, 2000);
+        }, 1000);
+      }
+    }
+  };
+  
+  // Handle reply adding
+  const handleAddReply = (commentId, reply, updatedReplies) => {
+    setComments(prevComments => 
+      prevComments.map(comment => 
+        comment.id === commentId 
+          ? { ...comment, replies: updatedReplies } 
+          : comment
+      )
+    );
+    
+    commentService.addReply(commentId, reply);
+    
+    // Simulate guest replying to your reply
+    if (collaborationEnabled && isGuestPresent) {
+      const comment = comments.find(c => c.id === commentId);
+      if (comment && comment.guestCreated) {
+        setTimeout(() => {
+          setGuestActivity('Guest is typing a reply...');
+          
+          setTimeout(() => {
+            const guestReply = {
+              id: `reply-guest-${Date.now()}`,
+              author: 'Guest User',
+              text: 'Thanks for your input! Ill take that into consideration.',
+              timestamp: new Date().toISOString()
+            };
+            
+            const updatedRepliesWithGuest = [...updatedReplies, guestReply];
+            
+            setComments(prevComments => 
+              prevComments.map(comment => 
+                comment.id === commentId 
+                  ? { ...comment, replies: updatedRepliesWithGuest } 
+                  : comment
+              )
+            );
+            
+            commentService.addReply(commentId, guestReply);
+            
+            setGuestActivity(null);
+          }, 3000);
+        }, 2000);
+      }
+    }
+  };
+  
+  // Start linking mode
+  const handleStartLinking = (commentId) => {
+    setLinkingMode(true);
+    setLinkingSourceId(commentId);
+    
+    // Close any open comment bubble
+    onCommentExpand(null);
+  };
+  
+  // Cancel linking mode
+  const handleCancelLinking = () => {
+    setLinkingMode(false);
+    setLinkingSourceId(null);
+  };
+  
+  // Create a link between comments
+  const handleCreateLink = (sourceId, targetId) => {
+    setComments(prevComments => {
+      return prevComments.map(comment => {
+        if (comment.id === sourceId) {
+          // Add link to target if it doesn't already exist
+          const links = comment.links || [];
+          if (!links.includes(targetId)) {
+            return {
+              ...comment,
+              links: [...links, targetId]
+            };
+          }
+        }
+        return comment;
+      });
+    });
+    
+    // Exit linking mode after creating the link
+    setLinkingMode(false);
+    setLinkingSourceId(null);
+  };
+  
+  // Remove a link between comments
+  const handleRemoveLink = (sourceId, targetId) => {
+    setComments(prevComments => {
+      return prevComments.map(comment => {
+        if (comment.id === sourceId && comment.links) {
+          // Remove link to target
+          return {
+            ...comment,
+            links: comment.links.filter(id => id !== targetId)
+          };
+        }
+        return comment;
+      });
+    });
+  };
+
+  // Render link lines between comments
+  const renderLinks = () => {
+    return links.map(link => {
+      const sourceComment = comments.find(c => c.id === link.source);
+      const targetComment = comments.find(c => c.id === link.target);
+      
+      if (!sourceComment || !targetComment) return null;
+      
+      // Calculate screen coordinates for source and target
+      const sourceX = sourceComment.position.x * zoom + localPan.x;
+      const sourceY = sourceComment.position.y * zoom + localPan.y;
+      const targetX = targetComment.position.x * zoom + localPan.x;
+      const targetY = targetComment.position.y * zoom + localPan.y;
+      
+      // Determine line color based on link type
+      let strokeColor = "#777";
+      if (sourceComment.type === targetComment.type) {
+        // Same type links
+        switch (sourceComment.type.toLowerCase()) {
+          case 'technical': strokeColor = "#ff4136"; break;
+          case 'conceptual': strokeColor = "#0074D9"; break;
+          case 'details': strokeColor = "#2ECC40"; break;
+          default: strokeColor = "#777";
+        }
+      } else {
+        // Different type links
+        strokeColor = "#9B59B6"; // Purple for mixed links
+      }
+      
+      return (
+        <svg 
+          key={link.id}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'none',
+            zIndex: 2
+          }}
+        >
+          <line
+            x1={sourceX}
+            y1={sourceY}
+            x2={targetX}
+            y2={targetY}
+            stroke={strokeColor}
+            strokeWidth={2}
+            strokeDasharray="4"
+            className="link-line"
+          />
+        </svg>
+      );
+    });
+  };
 
   return (
-    <div
+    <div 
       ref={canvasRef}
+      style={{
+        position: 'relative',
+        width: '100%',
+        height: '100%',
+        overflow: 'hidden',
+        cursor: isDragging ? 'grabbing' : (mode === 'comment' ? 'crosshair' : 'default')
+      }}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
-      onDoubleClick={handleDoubleClick}
-      className="whiteboard-canvas"
-      style={{
-        transform: `scale(${zoom}) translate(${pan.x}px, ${pan.y}px)`,
-        transformOrigin: 'center center',
-        width: '100%',
-        height: '100%',
-        position: 'absolute',
-        left: 0,
-        top: 0
-      }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onClick={e => e.target === canvasRef.current && handleCanvasClick(e)}
+      onDoubleClick={handleCanvasDoubleClick}
+      onContextMenu={e => e.preventDefault()} // Prevent right-click menu
     >
-      {/* Placeholder background */}
-      <div className="whiteboard-placeholder">
-        <img
-          src={imageUrl || "/api/placeholder/600/400"}
-          alt="Whiteboard Placeholder"
-          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-        />
-      </div>
-
-      {/* SVG layer for drawing links */}
-      <svg 
-        width="100%" 
-        height="100%" 
-        style={{ 
-          position: 'absolute', 
-          top: 0, 
-          left: 0, 
-          pointerEvents: 'none',
-          zIndex: 4
+      {/* Background image with transform */}
+      {imageUrl && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: `translate(-50%, -50%) translate(${localPan.x}px, ${localPan.y}px) scale(${zoom})`,
+            transformOrigin: 'center center',
+            transition: isDragging ? 'none' : 'transform 0.1s ease-out'
+          }}
+        >
+          <img 
+            src={imageUrl} 
+            alt="Whiteboard content"
+            className="whiteboard-image" 
+            style={{ 
+              maxWidth: '70%', 
+              maxHeight: '70%',
+              boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+              border: '1px solid #ddd'
+            }} 
+          />
+        </div>
+      )}
+      
+      {/* Comments and links container with transform */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          transform: `translate(${localPan.x}px, ${localPan.y}px)`,
+          transformOrigin: '0 0',
+          pointerEvents: 'none'
         }}
       >
-        {/* Define the arrowhead marker */}
-        <defs>
-          <marker
-            id="arrowhead"
-            markerWidth="10"
-            markerHeight="7"
-            refX="10"
-            refY="3.5"
-            orient="auto"
-          >
-            <polygon points="0 0, 10 3.5, 0 7" fill="#555555" />
-          </marker>
-        </defs>
-        
-        {/* Render all link lines */}
-        {linkLines}
-
-        {/* Render custom drawn line */}
-        {isDrawingLine && renderDrawnLine()}
-      </svg>
-
-      {/* Comments with Draggable */}
-      {comments.map((comment) => (
-        <React.Fragment key={comment.id}>
-          {/* The comment tag wrapped in a draggable component */}
-          <CommentDraggable
-            key={`draggable-${comment.id}`}
-            position={comment.position}
-            onPositionChange={(newPosition) => {
-              if (setComments) {
-                setComments(prevComments => 
-                  prevComments.map(c => 
-                    c.id === comment.id 
-                      ? { ...c, position: newPosition } 
-                      : c
-                  )
-                );
-              }
+        {/* Comment tags */}
+        {comments.map(comment => (
+          <div
+            key={comment.id}
+            style={{
+              position: 'absolute',
+              left: `${comment.position.x * zoom}px`,
+              top: `${comment.position.y * zoom}px`,
+              transform: 'translate(-50%, -50%)',
+              pointerEvents: 'auto', // Enable events for comments
+              cursor: draggedCommentId === comment.id ? 'grabbing' : 'grab',
+              zIndex: 5
             }}
-            zoomLevel={zoom}
-            panOffset={pan}
-            canvasRef={canvasRef}
-            isDraggable={mode === 'select' || mode === 'comment'}
+            onMouseDown={(e) => handleCommentDragStart(e, comment.id)}
+            onClick={(e) => handleCommentClick(e, comment.id)}
           >
             <CommentTag
               comment={comment}
               isSelected={selectedCommentId === comment.id}
-              onClick={() => handleCommentClick(comment.id)}
-              onDoubleClick={() => onCommentEdit(comment.id)}
-              onMouseEnter={() => onCommentHover(comment.id)}
-              onMouseLeave={() => onCommentHover(null)}
-              onLinkClick={() => {
-                setLinkingMode(true);
-                setLinkSourceId(comment.id);
+              isBeingEdited={guestCommentBeingEdited === comment.id}
+              onDoubleClick={() => {
+                // Double click to edit comment
+                onCommentSelect(comment.id);
+                onCommentExpand(comment.id);
               }}
-              isLinkSource={linkSourceId === comment.id}
-              isLinkingMode={linkingMode}
+              onMouseEnter={() => onCommentHover && onCommentHover(comment.id)}
+              onMouseLeave={() => onCommentHover && onCommentHover(null)}
+              onLinkClick={() => handleStartLinking(comment.id)}
+              userProfile={comment.guestCreated ? guestProfile : userProfile}
             />
-          </CommentDraggable>
-
-          {/* Comment bubble positioned relative to its tag */}
-          {(hoveredCommentId === comment.id || selectedCommentId === comment.id) && (
-            <CommentDraggable
-              key={`bubble-draggable-${comment.id}`}
-              position={{ 
-                x: comment.position.x, 
-                y: comment.position.y + 50 // Position the bubble below the tag with proper spacing
+          </div>
+        ))}
+      </div>
+      
+      {/* Render links */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          pointerEvents: 'none'
+        }}
+      >
+        {renderLinks()}
+      </div>
+      
+      {/* Comment bubble for expanded comment */}
+      {expandedCommentId && !linkingMode && (
+        (() => {
+          const selectedComment = comments.find(c => c.id === expandedCommentId);
+          if (!selectedComment) return null;
+          
+          // Position the bubble to the right of the comment
+          const commentX = selectedComment.position.x * zoom + localPan.x;
+          const commentY = selectedComment.position.y * zoom + localPan.y;
+          const bubbleX = commentX + 60; // Fixed offset to the right
+          
+          // Use collaborative comment bubble if enabled
+          if (useCollaborativeComments) {
+            return (
+              <div 
+                style={{
+                  position: 'absolute',
+                  left: `${bubbleX}px`,
+                  top: `${commentY}px`,
+                  transform: 'translate(0, -50%)',
+                  transformOrigin: 'left center',
+                  pointerEvents: 'auto',
+                  zIndex: 10
+                }}
+              >
+                <CollaborativeCommentBubble
+                  comment={selectedComment}
+                  onContentChange={handleContentChange}
+                  onTypeChange={handleTypeChange}
+                  onDelete={handleDeleteComment}
+                  onClose={handleCloseBubble}
+                  onReactionChange={handleReactionChange}
+                  onReplyAdd={handleAddReply}
+                  userProfile={selectedComment.guestCreated ? guestProfile : userProfile}
+                />
+              </div>
+            );
+          }
+          
+          // Default comment bubble
+          return (
+            <div 
+              style={{
+                position: 'absolute',
+                left: `${bubbleX}px`,
+                top: `${commentY}px`,
+                transform: 'translate(0, -50%)',
+                transformOrigin: 'left center',
+                pointerEvents: 'auto',
+                zIndex: 10
               }}
-              onPositionChange={() => {}} // Bubbles don't need to be independently repositioned
-              zoomLevel={zoom}
-              panOffset={pan}
-              canvasRef={canvasRef}
-              isDraggable={false} // Bubbles are not independently draggable
             >
               <CommentBubble
-                comment={comment}
-                isExpanded={expandedCommentId === comment.id}
-                isEditing={editingCommentId === comment.id}
-                userProfile={comment.user}
-                onContentChange={(id, val) => {
-                  if (setComments) {
-                    setComments(prevComments => 
-                      prevComments.map(c => 
-                        c.id === id ? { ...c, content: val } : c
-                      )
-                    );
-                  }
-                }}
-                setEditingComment={onCommentEdit}
-                onBlur={() => {
-                  if (editingCommentId) {
-                    onCommentEdit(null);
-                  }
-                }}
-                onTypeChange={(id, type) => {
-                  const categoryColors = {
-                    'technical': '#ff4136',
-                    'conceptual': '#0074D9',
-                    'details': '#2ECC40'
-                  };
-                  
-                  const basePoints = {
-                    'technical': 5,
-                    'conceptual': 7,
-                    'details': 3
-                  };
-                  
-                  if (setComments) {
-                    setComments(prevComments => {
-                      return prevComments.map(comment => 
-                        comment.id === id 
-                          ? { 
-                              ...comment, 
-                              type: type,
-                              color: categoryColors[type] || '#ff4136',
-                              points: basePoints[type] || 5
-                            } 
-                          : comment
-                      );
-                    });
-                  }
-                }}
-                onDelete={(id) => {
-                  if (setComments) {
-                    // Remove links to this comment
-                    setComments(prevComments => {
-                      const updatedComments = prevComments.map(c => {
-                        if (c.links && c.links.includes(id)) {
-                          return {
-                            ...c,
-                            links: c.links.filter(linkId => linkId !== id)
-                          };
-                        }
-                        return c;
-                      });
-                      
-                      // Remove the comment itself
-                      return updatedComments.filter(c => c.id !== id);
-                    });
-                    
-                    // Clear selections
-                    if (onCommentSelect) onCommentSelect(null);
-                    if (onCommentEdit) onCommentEdit(null);
-                    if (onCommentExpand) onCommentExpand(null);
-                  }
-                }}
-                onClose={() => onCommentSelect(null)}
+                comment={selectedComment}
+                onContentChange={handleContentChange}
+                onTypeChange={handleTypeChange}
+                onDelete={handleDeleteComment}
+                onClose={handleCloseBubble}
+                onReactionChange={handleReactionChange}
+                onReplyAdd={handleAddReply}
+                userProfile={selectedComment.guestCreated ? guestProfile : userProfile}
               />
-            </CommentDraggable>
-          )}
-        </React.Fragment>
-      ))}
-
-      {/* Visual indicator for linking mode */}
-      {linkingMode && (
-        <div 
-          style={{
-            position: 'absolute',
-            top: '10px',
-            left: '50%',
-            transform: `translateX(-50%) scale(${1/zoom})`,
-            background: 'rgba(0, 102, 204, 0.8)',
-            color: 'white',
-            padding: '5px 10px',
-            borderRadius: '5px',
-            zIndex: 100,
-            pointerEvents: 'none'
-          }}
-        >
-          Click on a comment to create a link
-        </div>
+            </div>
+          );
+        })()
       )}
+      
+      {/* Comment linking overlay when in linking mode */}
+      {linkingMode && linkingSourceId && (
+        <CommentLinking
+          comments={comments}
+          sourceCommentId={linkingSourceId}
+          onLinkCreate={handleCreateLink}
+          onLinkRemove={handleRemoveLink}
+          onCancel={handleCancelLinking}
+          zoomLevel={zoom}
+          panOffset={localPan}
+        />
+      )}
+      
+      {/* Collaborative features */}
+      {collaborationEnabled && (
+        <>
+          {/* Local user cursor */}
+          {localCursor.visible && (
+            <div 
+              style={{
+                position: 'absolute',
+                left: localCursor.x,
+                top: localCursor.y,
+                width: 12,
+                height: 12,
+                borderRadius: '50%',
+                backgroundColor: '#FF5733', // Orange-red for local cursor
+                transform: 'translate(-50%, -50%)',
+                pointerEvents: 'none',
+                zIndex: 9999
+              }}
+            />
+          )}
+          
+          {/* Guest cursor */}
+          {guestCursor.visible && isGuestPresent && (
+            <div 
+              style={{
+                position: 'absolute',
+                left: guestCursor.x,
+                top: guestCursor.y,
+                width: 16,
+                height: 16,
+                borderRadius: '50%',
+                backgroundColor: '#3498DB', // Blue for guest cursor
+                transform: 'translate(-50%, -50%)',
+                pointerEvents: 'none',
+                zIndex: 9999,
+                boxShadow: '0 0 0 2px white',
+                transition: 'transform 0.1s ease-out'
+              }}
+            >
+              <div style={{
+                position: 'absolute',
+                left: 20,
+                top: 0,
+                backgroundColor: 'rgba(52, 152, 219, 0.8)',
+                padding: '3px 6px',
+                borderRadius: 3,
+                fontSize: 12,
+                color: 'white',
+                whiteSpace: 'nowrap'
+              }}>
+                Guest User
+              </div>
+            </div>
+          )}
+          
+          {/* Guest activity indicator */}
+          {guestActivity && (
+            <div style={{
+              position: 'absolute',
+              top: 10,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              backgroundColor: 'rgba(52, 152, 219, 0.9)',
+              color: 'white',
+              padding: '6px 12px',
+              borderRadius: '4px',
+              fontSize: '14px',
+              zIndex: 1000,
+              boxShadow: '0 2px 10px rgba(0,0,0,0.2)'
+            }}>
+              {guestActivity}
+            </div>
+          )}
+          
+          {/* Guest presence indicator */}
+          {isGuestPresent && (
+            <div style={{
+              position: 'absolute',
+              bottom: 10,
+              right: 10,
+              backgroundColor: 'rgba(52, 152, 219, 0.9)',
+              color: 'white',
+              padding: '8px 12px',
+              borderRadius: '4px',
+              fontSize: '14px',
+              zIndex: 1000,
+              display: 'flex',
+              alignItems: 'center',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.2)'
+            }}>
+              <div style={{
+                width: '10px',
+                height: '10px',
+                borderRadius: '50%',
+                backgroundColor: '#2ecc71',
+                marginRight: '8px',
+                animation: 'pulse 2s infinite'
+              }}></div>
+              Guest User is online
+            </div>
+          )}
+        </>
+      )}
+      
+      {/* CSS animations */}
+      <style jsx>{`
+        @keyframes pulse {
+          0% { opacity: 0.4; }
+          50% { opacity: 1; }
+          100% { opacity: 0.4; }
+        }
+      `}</style>
     </div>
   );
 };

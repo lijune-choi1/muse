@@ -3,8 +3,9 @@
   position: absolute;
   transform: translate(-50%, -50%);
   z-index: 3;
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: grab;
+  transition: transform 0.2s;
+  user-select: none;
 }
 
 .comment-tag:hover {
@@ -14,31 +15,23 @@
 .comment-tag.selected {
   transform: translate(-50%, -50%) scale(1.1);
   z-index: 4;
+  cursor: grabbing;
 }
 
-/* Linking mode styles */
-.comment-tag.linking-source {
-  z-index: 10;
-}
-
-.comment-tag.linking-mode:hover {
-  transform: translate(-50%, -50%) scale(1.15);
-}
-
-/* Pin styles - Updated to match wireframe */
+/* Pin styles - Simplified for better dragging */
 .comment-pin {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  background-color: #ff4136; /* Red color as shown in the wireframe */
-  border: none;
+  background-color: #ff4136; /* Default: Red for technical */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  position: relative;
 }
 
+/* Comment type colors */
 .comment-tag.technical .comment-pin {
   background-color: #ff4136; /* Red for technical */
 }
@@ -51,81 +44,49 @@
   background-color: #2ECC40; /* Green for details */
 }
 
-/* Remove the pin after element (triangle) to match the circular dots in wireframe */
-.comment-pin:after {
-  display: none;
+/* User avatar inside pin */
+.user-initial {
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
 }
 
-.comment-pin-inner {
-  display: none; /* Remove the inner circle as wireframe shows solid dots */
-}
-
-/* Link button */
+/* Link button - simplified and more clickable */
 .comment-link-button {
   position: absolute;
-  top: -12px;
-  right: -12px;
-  background: white;
+  bottom: -16px;
+  right: -16px;
+  background: rgb(0, 0, 0);
   border: none;
   border-radius: 50%;
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 10px;
   box-shadow: 0px 1px 3px rgba(0,0,0,0.2);
   z-index: 5;
-  transition: transform 0.2s, background-color 0.2s;
 }
 
-.comment-link-button:hover {
-  transform: scale(1.1);
-}
-
-/* Link counter badge */
-.comment-link-counter {
+/* Link counter */
+.link-counter {
   position: absolute;
-  top: -5px;
-  left: -5px;
-  background-color: #333;
+  top: -6px;
+  right: -6px;
+  background-color: #555;
   color: white;
-  border-radius: 50%;
-  min-width: 16px;
-  height: 16px;
-  font-size: 10px;
+  border-radius: 8px;
+  min-width: 14px;
+  height: 14px;
+  font-size: 9px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0px 1px 3px rgba(0,0,0,0.3);
-  border: none;
-  padding: 0 2px;
-}
-
-/* Additional CSS for user info in CommentTag.css */
-.comment-tag {
-  position: relative; /* Ensure proper positioning for child elements */
-}
-
-.comment-tag-user-info {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 6;
-}
-
-.comment-tag-user-avatar {
-  max-width: 10px;
-  max-height: 10px;
-  border-radius: 50%;
-  border: 2px solid white;
-  object-fit: cover;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
-
-/* Adjust tag positioning to make room for avatar */
-.comment-tag {
-  margin-top: 12px;
+  padding: 0 3px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  pointer-events: none;
 }
