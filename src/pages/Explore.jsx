@@ -86,9 +86,9 @@ const Explore = () => {
       {loading ? (
         <div>Loading communities...</div>
       ) : communities.length > 0 ? (
-        <div className="communities-grid">
+        <div className="c-communities-grid">
           {communities.map(community => (
-            <div key={community.id} className="community-card">
+            <div key={community.id} className="c-community-card">
               <div className="community-card-header">
                 <h2>{community.name}</h2>
                 <span className="community-members">{community.stats?.members || 0} members</span>

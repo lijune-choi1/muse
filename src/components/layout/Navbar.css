@@ -55,9 +55,11 @@
 }
 
 .profile-image {
+  margin-right:8px;
   width: 2rem;
   height: 2rem;
   border-radius: 50%;
-  background-color: #eaeaea;
+  background: url('../../../public/assets/images/default-avatar.png');
+  background-size:contain;
   cursor: pointer;
 }

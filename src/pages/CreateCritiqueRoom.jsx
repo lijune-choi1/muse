@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/layout/Navbar';
 import Sidebar from '../components/layout/Sidebar';
+import critiqueService from './CritiqueService'; // Import CritiqueService
 import './CreateCritiquePost.css'; // Reusing the existing CSS
 
 const CreateCritiqueRoom = () => {
@@ -31,22 +32,29 @@ const CreateCritiqueRoom = () => {
       // Format community name to match existing pattern
       const formattedCommunityName = `r/${communityName.trim().toLowerCase().replace(/\s+/g, '')}`;
 
-      // In a real app, this would be an API call to create a community
-      // For now, we'll simulate the creation and navigate to the new community
+      // Create the new community object
       const newCommunity = {
         name: formattedCommunityName,
         description: description.trim(),
         guidelines: guidelines.trim().split('\n').filter(g => g.trim()),
         rules: rules.trim().split('\n').filter(r => r.trim()),
         visibility: isPublic ? 'Public' : 'Private',
-        createdDate: new Date().toLocaleDateString()
+        createdBy: 'lijune.choi20' // Current user - in a real app would come from auth context
       };
 
-      // Simulated community creation
       console.log('Creating new community:', newCommunity);
-
-      // Navigate to the new community page
-      navigate(`/community/${communityName.trim().toLowerCase().replace(/\s+/g, '')}`);
+      
+      // Actually create the community using critiqueService
+      try {
+        const createdCommunity = await critiqueService.createCommunity(newCommunity);
+        console.log('Community created successfully:', createdCommunity);
+        
+        // Navigate to the new community page
+        navigate(`/community/${communityName.trim().toLowerCase().replace(/\s+/g, '')}`);
+      } catch (serviceError) {
+        console.error('CritiqueService error:', serviceError);
+        setError('Failed to create community: ' + serviceError.message);
+      }
     } catch (error) {
       console.error('Error creating community:', error);
       setError('Failed to create community. Please try again.');
@@ -128,7 +136,7 @@ const CreateCritiqueRoom = () => {
                 <textarea
                   id="rules"
                   className="critique-textarea"
-                  placeholder="Entercommunity rules"
+                  placeholder="Enter community rules"
                   value={rules}
                   onChange={(e) => setRules(e.target.value)}
                   rows="3"

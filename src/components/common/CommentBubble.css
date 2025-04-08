@@ -1,7 +1,7 @@
 /* src/components/common/CommentBubble.css */
 .comment-bubble {
   position: absolute;
-  background-color: rgba(0, 0, 0, 0.75);
+  background-color: rgba(0, 0, 0, 0.8);
   border: none;
   color: white;
   border-radius: 8px;
@@ -9,6 +9,8 @@
   z-index: 5;
   overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s ease-out;
 }
 
 /* Common elements */
@@ -23,7 +25,7 @@
   height: 32px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid white;
+  border: 2px solid rgb(255, 255, 255);
 }
 
 .comment-type-pill {
@@ -50,23 +52,52 @@
   background-color: #2ECC40; /* Green for details */
 }
 
-/* Hover state - Image 1 */
+/* Hover state - Compact view */
 .comment-bubble.hover-state {
-  padding: 10px;
+  padding: 8px;
+  width: 200px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
+  pointer-events: all; /* Ensure it catches mouse events */
+}
+
+.comment-bubble.hover-state:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .comment-text {
-  color: #f0f0f0;
-  margin-top: 5px;
+  color: #ffffff;
   font-size: 0.875rem;
+  line-height: 1.4;
 }
 
-/* Expanded mode - Image 2 */
-.comment-bubble.expanded,
-.comment-bubble.edit-mode {
+.hover-reactions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.hover-reaction {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.hover-message {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+  margin-top: 4px;
+  font-style: italic;
+}
+
+/* Expanded mode */
+.comment-bubble.expanded {
+  width: 300px;
 }
 
 .comment-bubble-header {
@@ -126,6 +157,10 @@
 }
 
 /* Edit mode specific */
+.comment-bubble.edit-mode {
+  width: 300px;
+}
+
 .comment-edit-container {
   display: flex;
   flex-direction: column;
@@ -157,6 +192,26 @@
   outline: none;
   background-color: rgba(255, 255, 255, 0.05);
   color: white;
+}
+
+.comment-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 12px;
+}
+
+.save-button {
+  background-color: #0074D9;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.save-button:hover {
+  background-color: #0063b1;
 }
 
 /* Link formation animations */
@@ -193,7 +248,7 @@
   animation: linkLineAnimation 1s linear;
 }
 
-/* NEW: Comment reactions and reply section */
+/* Comment reactions and reply section */
 .comment-reactions {
   display: flex;
   align-items: center;
@@ -245,10 +300,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color:black;
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.2);
   border-radius: 8px;
   padding: 0 4px;
+  color: white;
 }
 
 /* Comment thread styles */
@@ -333,3 +388,19 @@
   background-color: rgba(255, 255, 255, 0.3);
 }
 
+/* Thread badge for comments with replies */
+.thread-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: #0074D9;
+  color: white;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: bold;
+}

@@ -6,18 +6,19 @@ import './Home.css';
 
 const Home = () => {
   const [critiquePosts, setCritiquePosts] = useState([]);
+  const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    // TEMPORARY FIX: Clear localStorage to force reinitialization with image URLs
-    // You can remove this after the first time you run it
-    localStorage.removeItem('critiquePosts');
-    localStorage.removeItem('critiqueCommunities');
-    localStorage.removeItem('whiteboardData');
-    localStorage.removeItem('userPreferences');
+    // Remove the localStorage clearing code - it's preventing persistence
     
     // Fetch all posts from both communities
     const fetchPosts = async () => {
       try {
+        setLoading(true);
+        
+        // Force initialization of default data if needed
+        await critiqueService._initializeDefaultData();
+        
         const ijunePosts = await critiqueService.getAllPosts('r/ijuneneedshelp');
         const graphicPosts = await critiqueService.getAllPosts('r/Graphic4ever');
         
@@ -31,6 +32,8 @@ const Home = () => {
         setCritiquePosts(allPosts);
       } catch (error) {
         console.error('Error fetching posts:', error);
+      } finally {
+        setLoading(false);
       }
     };
     
@@ -44,23 +47,31 @@ const Home = () => {
 
   return (
     <div className="content-wrapper">
-      <div className="critiques-grid">
-        {critiquePosts.map(post => (
-          <CritiqueCard 
-            key={post.id}
-            id={post.id}
-            community={post.community} 
-            date={post.date}
-            title={post.title}
-            description={post.description}
-            editNumber={post.editNumber}
-            status={post.status}
-            onEditClick={handleEditClick}
-            image={post.imageUrl}
-            author={post.author}
-          />
-        ))}
-      </div>
+      {loading ? (
+        <div className="loading-spinner">Loading posts...</div>
+      ) : critiquePosts.length > 0 ? (
+        <div className="critiques-grid">
+          {critiquePosts.map(post => (
+            <CritiqueCard 
+              key={post.id}
+              id={post.id}
+              community={post.community} 
+              date={post.date}
+              title={post.title}
+              description={post.description}
+              editNumber={post.editNumber}
+              status={post.status}
+              onEditClick={handleEditClick}
+              image={post.imageUrl}
+              author={post.author}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="no-posts-message">
+          <p>No posts found. Create a new post to get started!</p>
+        </div>
+      )}
     </div>
   );
 };

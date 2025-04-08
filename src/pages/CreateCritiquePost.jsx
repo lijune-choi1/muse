@@ -33,18 +33,21 @@ const CreateCritiquePost = () => {
         // Add more detailed logging
         console.log('Fetching communities...');
         
-        const all = await critiqueService.getAllCommunities();
-        console.log('Fetched communities:', all);
+        const allCommunities = await critiqueService.getAllCommunities();
+        console.log('Fetched communities:', allCommunities);
         
-        // Ensure we're extracting names correctly
-        const names = all.map(c => c.name || `r/${c.id}`);
-        
-        console.log('Community names:', names);
-        
-        // Ensure we have a default community
-        if (names.length > 0) {
-          setCommunities(names);
-          setCommunity(names[0]);  // Set first community as default
+        // If we successfully got communities from the service
+        if (allCommunities && allCommunities.length > 0) {
+          // Extract community names
+          const communityNames = allCommunities.map(c => c.name || `r/${c.id}`);
+          console.log('Community names:', communityNames);
+          
+          setCommunities(communityNames);
+          
+          // Only set the default community if none is currently selected
+          if (!community || community === '') {
+            setCommunity(communityNames[0]);
+          }
         } else {
           // Fallback to default communities if none fetched
           const defaultCommunities = [
@@ -52,7 +55,11 @@ const CreateCritiquePost = () => {
             'r/Graphic4ever'
           ];
           setCommunities(defaultCommunities);
-          setCommunity(defaultCommunities[0]);
+          
+          // Only set the default community if none is currently selected
+          if (!community || community === '') {
+            setCommunity(defaultCommunities[0]);
+          }
         }
       } catch (err) {
         console.error("Failed to load communities:", err);
@@ -63,7 +70,11 @@ const CreateCritiquePost = () => {
           'r/Graphic4ever'
         ];
         setCommunities(defaultCommunities);
-        setCommunity(defaultCommunities[0]);
+        
+        // Only set the default community if none is currently selected
+        if (!community || community === '') {
+          setCommunity(defaultCommunities[0]);
+        }
       }
     };
   
@@ -161,6 +172,12 @@ const CreateCritiquePost = () => {
     setError(null);
 
     try {
+      if (!imagePreview) {
+        setError("An image is required for the post.");
+        setIsSubmitting(false);
+        return;
+      }
+
       let finalThreadId = null;
 
       if (postType === 'newThread') {
@@ -401,4 +418,3 @@ const CreateCritiquePost = () => {
 };
 
 export default CreateCritiquePost;
-

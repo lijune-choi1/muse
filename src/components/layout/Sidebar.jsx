@@ -1,6 +1,6 @@
 // src/components/layout/Sidebar.jsx
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom'; // Add useLocation
 import './Sidebar.css';
 import critiqueService from '../../pages/CritiqueService';
 
@@ -25,44 +25,72 @@ const Sidebar = () => {
   const [followedCommunities, setFollowedCommunities] = useState(DEFAULT_COMMUNITIES.followed);
   const [ownedCommunities, setOwnedCommunities] = useState(DEFAULT_COMMUNITIES.owned);
   const [isLoading, setIsLoading] = useState(true);
+  const location = useLocation(); // Get current location to detect navigation changes
 
   // Current user - in a real app would come from auth context
   const currentUser = 'lijune.choi20';
 
-  useEffect(() => {
-    // Function to load communities
-    const loadCommunities = async () => {
+  // Function to load communities - extracted to be called multiple times
+  const loadCommunities = async () => {
+    try {
+      setIsLoading(true);
+      console.log('Sidebar: Loading communities...');
+      
       try {
-        setIsLoading(true);
+        // Force initialization of default data
+        if (typeof critiqueService._initializeDefaultData === 'function') {
+          await critiqueService._initializeDefaultData();
+        }
+
+        // Get all communities
+        const allCommunities = await critiqueService.getAllCommunities();
+        console.log('Sidebar: Fetched communities:', allCommunities);
         
-        // Try to import CritiqueService
-        try {
+        // Check if we got communities
+        if (allCommunities && allCommunities.length > 0) {
           // Fetch followed communities
-          const followedCommunities = await critiqueService.getFollowedCommunities(currentUser);
-          if (followedCommunities && followedCommunities.length > 0) {
-            setFollowedCommunities(followedCommunities);
+          const userFollowed = await critiqueService.getUserFollowedCommunities(currentUser);
+          console.log('Sidebar: User followed communities:', userFollowed);
+          if (userFollowed && userFollowed.length > 0) {
+            setFollowedCommunities(userFollowed);
+          } else {
+            setFollowedCommunities(DEFAULT_COMMUNITIES.followed);
           }
 
-          // Fetch owned communities
-          const ownedCommunities = await critiqueService.getOwnedCommunities(currentUser);
-          if (ownedCommunities && ownedCommunities.length > 0) {
-            setOwnedCommunities(ownedCommunities);
+          // Fetch created/owned communities
+          const userCreated = await critiqueService.getUserCreatedCommunities(currentUser);
+          console.log('Sidebar: User created communities:', userCreated);
+          if (userCreated && userCreated.length > 0) {
+            setOwnedCommunities(userCreated);
+          } else {
+            setOwnedCommunities([]);
           }
-        } catch (importError) {
-          console.error("Error importing communities:", importError);
-          // Fallback to default communities
+        } else {
+          // No communities found, use defaults
+          console.log('Sidebar: No communities found, using defaults');
           setFollowedCommunities(DEFAULT_COMMUNITIES.followed);
           setOwnedCommunities(DEFAULT_COMMUNITIES.owned);
         }
-      } catch (error) {
-        console.error("Error loading communities:", error);
-      } finally {
-        setIsLoading(false);
+      } catch (importError) {
+        console.error("Sidebar: Error fetching communities:", importError);
+        // Fallback to default communities
+        setFollowedCommunities(DEFAULT_COMMUNITIES.followed);
+        setOwnedCommunities(DEFAULT_COMMUNITIES.owned);
       }
-    };
-    
+    } catch (error) {
+      console.error("Sidebar: Error loading communities:", error);
+      // Final fallback to defaults
+      setFollowedCommunities(DEFAULT_COMMUNITIES.followed);
+      setOwnedCommunities(DEFAULT_COMMUNITIES.owned);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Run on initial load and whenever the location changes
+  useEffect(() => {
     loadCommunities();
-  }, []);
+  }, [location.pathname]); // This will reload communities when navigation occurs
 
   return (
     <div className="sidebar">
@@ -159,6 +187,22 @@ const Sidebar = () => {
           </li>
         </ul>
       </div>
+
+      {/* Add a hidden refresh button that's useful for debugging */}
+      <button 
+        onClick={loadCommunities} 
+        style={{ 
+          display: 'none',  // Hidden by default
+          marginTop: '20px', 
+          padding: '8px', 
+          background: '#f1f1f1', 
+          border: '1px solid #ddd', 
+          borderRadius: '4px', 
+          cursor: 'pointer' 
+        }}
+      >
+        Refresh Communities
+      </button>
     </div>
   );
 };

@@ -36,10 +36,10 @@ const UserProfile = () => {
   
   // Mock achievements data
   const achievements = [
-    { id: 1, name: 'First Post', icon: '🏆', description: 'Created your first post', date: 'Apr 1, 2025' },
-    { id: 2, name: 'Community Builder', icon: '🏛️', description: 'Created a community', date: 'Apr 2, 2025' },
-    { id: 3, name: 'Helpful Feedback', icon: '👍', description: 'Received 10 likes on feedback', date: 'Apr 3, 2025' },
-    { id: 4, name: 'Design Expert', icon: '🎨', description: 'Provided critique on 5 posts', date: 'Apr 4, 2025' }
+    { id: 1, name: 'First Post', img: '/assets/images/asset-badge.png', description: 'Created your first post', date: 'Apr 1, 2025' },
+    { id: 2, name: 'Community Builder', img: '/assets/images/asset-badge.png', description: 'Created a community', date: 'Apr 2, 2025' },
+    { id: 3, name: 'Helpful Feedback', img: '/assets/images/asset-badge.png', description: 'Received 10 likes on feedback', date: 'Apr 3, 2025' },
+    { id: 4, name: 'Design Expert', img: '/assets/images/asset-badge.png', description: 'Provided critique on 5 posts', date: 'Apr 4, 2025' }
   ];
 
   // Function to refresh data
@@ -339,7 +339,18 @@ const UserProfile = () => {
               <div className="achievements-list">
                 {achievements.map(achievement => (
                   <div key={achievement.id} className="achievement-card">
-                    <div className="achievement-icon">{achievement.icon}</div>
+                    <div className="achievement-icon">       
+                                    <img 
+                          src={achievement.img} 
+                          alt={achievement.name} 
+                          style={{ 
+                            width: '100%', 
+                            height: '100%', 
+                            borderRadius: '100%',
+                            objectFit: 'contain' 
+                          }} 
+                        />
+                    </div>
                     <div className="achievement-info">
                       <h4 className="achievement-name">{achievement.name}</h4>
                       <p className="achievement-description">{achievement.description}</p>
@@ -447,7 +458,7 @@ const UserProfile = () => {
             )}
           </div>
 
-          <div className="profile-sidebar">
+          {/* <div className="profile-sidebar">
             <section className="achievements-section">
               <div className="sidebar-header">
                 <h2 className="section-title">TOP ACHIEVEMENTS</h2>
@@ -489,7 +500,7 @@ const UserProfile = () => {
                 ))}
               </ul>
             </section>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

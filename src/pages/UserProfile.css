@@ -1,7 +1,7 @@
 /* src/pages/UserProfile.css */
 .profile-container {
-  flex: 1;
   padding: 0 20px;
+  margin:32px;
 }
 
 .profile-header {

@@ -7,10 +7,19 @@ class CritiqueService {
     this.whiteboardData = {};
     this.userPreferences = {};
   
-    // Force initialization if needed - add this line
-  
+    // Load from localStorage first
     this._loadFromLocalStorage();
-    this._initializeDefaultData();
+    
+    // Check if we need to initialize default data
+    console.log('After loading from localStorage:');
+    console.log('- Communities:', this.communities.length);
+    console.log('- Posts:', this.critiquePosts.length);
+    
+    // Always initialize default data if communities array is empty
+    if (this.communities.length === 0) {
+      console.log('Initializing default communities...');
+      this._initializeDefaultData();
+    }
   }
 
   _initializeDefaultData() {
@@ -202,7 +211,12 @@ class CritiqueService {
         };
       }
       
-      this._saveToLocalStorage();
+            // Save the initialized data to localStorage
+        this._saveToLocalStorage();
+        console.log('Default data initialized and saved to localStorage');
+        console.log('- Communities:', this.communities.length);
+        
+        return Promise.resolve();
     }
   }
 
@@ -274,60 +288,296 @@ class CritiqueService {
     return Promise.resolve(posts);
   }
 
-  getAllCommunities() {
+  // getAllCommunities() {
+  //   return Promise.resolve([...this.communities]);
+  // }
+
+  // getUserCreatedCommunities(username) {
+  //   const communities = this.communities.filter(
+  //     community => community.createdBy === username || 
+  //                 (community.moderators && community.moderators.some(mod => mod.name === username))
+  //   );
+  //   return Promise.resolve(communities);
+  // }
+
+  // getUserFollowedCommunities(username) {
+  //   const userPrefs = this.userPreferences[username];
+  //   if (!userPrefs || !userPrefs.followedCommunities) {
+  //     return Promise.resolve([]);
+  //   }
+    
+  //   const followedCommunities = this.communities.filter(
+  //     community => userPrefs.followedCommunities.includes(community.id)
+  //   );
+  //   return Promise.resolve(followedCommunities);
+  // }
+  
+  // followCommunity(username, communityId) {
+  //   if (!this.userPreferences[username]) {
+  //     this.userPreferences[username] = { followedCommunities: [] };
+  //   }
+    
+  //   if (!this.userPreferences[username].followedCommunities.includes(communityId)) {
+  //     this.userPreferences[username].followedCommunities.push(communityId);
+  //     this._saveToLocalStorage();
+  //   }
+    
+  //   return Promise.resolve({ success: true });
+  // }
+  
+  // unfollowCommunity(username, communityId) {
+  //   if (!this.userPreferences[username] || !this.userPreferences[username].followedCommunities) {
+  //     return Promise.resolve({ success: false, error: 'User not found or no followed communities' });
+  //   }
+    
+  //   this.userPreferences[username].followedCommunities = 
+  //     this.userPreferences[username].followedCommunities.filter(id => id !== communityId);
+  //   this._saveToLocalStorage();
+    
+  //   return Promise.resolve({ success: true });
+  // }
+  
+  // getCommunityByName(name) {
+  //   const community = this.communities.find(comm => comm.name.toLowerCase() === name.toLowerCase());
+  //   return Promise.resolve(community || null);
+  // }
+  // Improved getAllCommunities method with better error handling
+// Replace this method in your CritiqueService.js file
+
+// Replace this method in your CritiqueService.js file
+
+getAllCommunities() {
+  console.log('getAllCommunities called');
+  
+  try {
+    // Make sure we have communities
+    if (!Array.isArray(this.communities) || this.communities.length === 0) {
+      console.log('No communities found, initializing default data');
+      this._initializeDefaultData();
+    }
+    
+    console.log('Returning communities:', this.communities);
+    
+    // Check if communities is somehow still empty
+    if (!this.communities || this.communities.length === 0) {
+      console.log('Still no communities after initialization, using hardcoded defaults');
+      return Promise.resolve([
+        {
+          id: 1,
+          name: 'r/ijuneneedshelp',
+          description: 'Community board for Iijune to get feedback for design',
+          stats: { members: 128, online: 42 },
+          createdBy: 'lijune.choi20'
+        },
+        {
+          id: 2,
+          name: 'r/Graphic4ever',
+          description: 'A community for graphic designers to share and critique professional work',
+          stats: { members: 256, online: 78 },
+          createdBy: 'GraphicPro'
+        }
+      ]);
+    }
+    
     return Promise.resolve([...this.communities]);
+  } catch (error) {
+    console.error('Error in getAllCommunities:', error);
+    
+    // Return default communities as fallback
+    return Promise.resolve([
+      {
+        id: 1,
+        name: 'r/ijuneneedshelp',
+        description: 'Community board for Iijune to get feedback for design',
+        stats: { members: 128, online: 42 },
+        createdBy: 'lijune.choi20'
+      },
+      {
+        id: 2,
+        name: 'r/Graphic4ever',
+        description: 'A community for graphic designers to share and critique professional work',
+        stats: { members: 256, online: 78 },
+        createdBy: 'GraphicPro'
+      }
+    ]);
   }
+}
+// Replace just the createCommunity method in your CritiqueService.js file
 
-  getUserCreatedCommunities(username) {
-    const communities = this.communities.filter(
-      community => community.createdBy === username || 
-                  (community.moderators && community.moderators.some(mod => mod.name === username))
-    );
-    return Promise.resolve(communities);
+createCommunity(communityData) {
+  console.log('createCommunity called with:', communityData);
+  
+  try {
+    // Make sure communities is initialized
+    if (!Array.isArray(this.communities)) {
+      console.log('this.communities is not an array in createCommunity, creating new array');
+      this.communities = [];
+    }
+    
+    // Generate a new ID
+    const highestId = this.communities.reduce((max, community) => 
+      community && community.id > max ? community.id : max, 0);
+    
+    const newCommunity = {
+      ...communityData,
+      id: highestId + 1,
+      stats: { members: 1, online: 1 },
+      moderators: [{ id: 1, name: communityData.createdBy || 'Founder' }],
+      createdDate: new Date().toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      })
+    };
+    
+    console.log('New community object created:', newCommunity);
+    
+    // Add to communities array
+    this.communities.push(newCommunity);
+    console.log('Community pushed. New length:', this.communities.length);
+    
+    // Manually update user preferences instead of calling followCommunity
+    const createdBy = newCommunity.createdBy;
+    if (createdBy) {
+      if (!this.userPreferences[createdBy]) {
+        this.userPreferences[createdBy] = { followedCommunities: [] };
+      }
+      if (!this.userPreferences[createdBy].followedCommunities.includes(newCommunity.id)) {
+        this.userPreferences[createdBy].followedCommunities.push(newCommunity.id);
+        console.log(`User ${createdBy} now follows community ID ${newCommunity.id}`);
+      }
+    }
+    
+    // Save to localStorage
+    this._saveToLocalStorage();
+    
+    return Promise.resolve(newCommunity);
+  } catch (error) {
+    console.error('Error in createCommunity:', error);
+    return Promise.reject(error);
   }
+}
 
-  getUserFollowedCommunities(username) {
+// createCommunity(communityData) {
+//   try {
+//     console.log('Creating new community:', communityData);
+    
+//     // Generate a new ID (one higher than the highest existing ID)
+//     const highestId = this.communities.reduce((max, community) => 
+//       community.id > max ? community.id : max, 0);
+    
+//     const newCommunity = {
+//       ...communityData,
+//       id: highestId + 1,
+//       stats: { members: 1, online: 1 },
+//       moderators: [{ id: 1, name: communityData.createdBy || 'Founder' }],
+//       createdDate: new Date().toLocaleDateString('en-US', {
+//         month: 'short',
+//         day: 'numeric',
+//         year: 'numeric'
+//       })
+//     };
+    
+//     // Add to communities array
+//     this.communities.push(newCommunity);
+//     console.log('Added new community. Total communities:', this.communities.length);
+    
+//     // Make sure user follows their own community
+//     if (newCommunity.createdBy) {
+//       if (!this.userPreferences[newCommunity.createdBy]) {
+//         this.userPreferences[newCommunity.createdBy] = { followedCommunities: [] };
+//       }
+      
+//       if (!this.userPreferences[newCommunity.createdBy].followedCommunities.includes(newCommunity.id)) {
+//         this.userPreferences[newCommunity.createdBy].followedCommunities.push(newCommunity.id);
+//         console.log('User now follows their new community');
+//       }
+//     }
+    
+//     // Save to localStorage
+//     this._saveToLocalStorage();
+//     return Promise.resolve(newCommunity);
+//   } catch (error) {
+//     console.error('Error creating community:', error);
+//     return Promise.reject(error);
+//   }
+// }
+
+// Make sure we have multiple ways to get user communities
+getFollowedCommunities(username) {
+  return this.getUserFollowedCommunities(username);
+}
+
+getUserFollowedCommunities(username) {
+  try {
+    console.log('Getting followed communities for:', username);
+    console.log('User preferences:', this.userPreferences);
+    
     const userPrefs = this.userPreferences[username];
     if (!userPrefs || !userPrefs.followedCommunities) {
+      console.log('No followed communities found for user');
       return Promise.resolve([]);
     }
+    
+    console.log('User followed community IDs:', userPrefs.followedCommunities);
     
     const followedCommunities = this.communities.filter(
       community => userPrefs.followedCommunities.includes(community.id)
     );
+    
+    console.log('Returning followed communities:', followedCommunities);
     return Promise.resolve(followedCommunities);
+  } catch (error) {
+    console.error('Error in getUserFollowedCommunities:', error);
+    return Promise.resolve([]);
   }
-  
-  followCommunity(username, communityId) {
-    if (!this.userPreferences[username]) {
-      this.userPreferences[username] = { followedCommunities: [] };
+}
+
+// Add or update this method in your CritiqueService.js
+getCommunityByName(name) {
+  try {
+    console.log('Looking for community with name:', name);
+    
+    // Make sure we have default communities
+    if (this.communities.length === 0) {
+      this._initializeDefaultData();
     }
     
-    if (!this.userPreferences[username].followedCommunities.includes(communityId)) {
-      this.userPreferences[username].followedCommunities.push(communityId);
-      this._saveToLocalStorage();
-    }
+    // Find the community by name (case insensitive)
+    const community = this.communities.find(
+      comm => comm.name && comm.name.toLowerCase() === name.toLowerCase()
+    );
     
-    return Promise.resolve({ success: true });
-  }
-  
-  unfollowCommunity(username, communityId) {
-    if (!this.userPreferences[username] || !this.userPreferences[username].followedCommunities) {
-      return Promise.resolve({ success: false, error: 'User not found or no followed communities' });
-    }
-    
-    this.userPreferences[username].followedCommunities = 
-      this.userPreferences[username].followedCommunities.filter(id => id !== communityId);
-    this._saveToLocalStorage();
-    
-    return Promise.resolve({ success: true });
-  }
-  
-  getCommunityByName(name) {
-    const community = this.communities.find(comm => comm.name.toLowerCase() === name.toLowerCase());
+    console.log('Found community:', community);
     return Promise.resolve(community || null);
+  } catch (error) {
+    console.error('Error in getCommunityByName:', error);
+    return Promise.resolve(null);
   }
-  
+}
+
+// Similar function for created communities
+getOwnedCommunities(username) {
+  return this.getUserCreatedCommunities(username);
+}
+
+getUserCreatedCommunities(username) {
+  try {
+    console.log('Getting created communities for:', username);
+    
+    const communities = this.communities.filter(
+      community => community.createdBy === username || 
+                  (community.moderators && community.moderators.some(mod => mod.name === username))
+    );
+    
+    console.log('Returning created communities:', communities);
+    return Promise.resolve(communities);
+  } catch (error) {
+    console.error('Error in getUserCreatedCommunities:', error);
+    return Promise.resolve([]);
+  }
+}
+
   isUserFollowingCommunity(username, communityId) {
     if (!this.userPreferences[username] || !this.userPreferences[username].followedCommunities) {
       return Promise.resolve(false);
@@ -401,6 +651,29 @@ class CritiqueService {
     return Promise.resolve(stats);
   }
 
+  // Add this method to your CritiqueService.js file
+followCommunity(username, communityId) {
+  console.log(`followCommunity called: user=${username}, communityId=${communityId}`);
+  
+  try {
+    if (!this.userPreferences[username]) {
+      this.userPreferences[username] = { followedCommunities: [] };
+    }
+    
+    if (!this.userPreferences[username].followedCommunities.includes(communityId)) {
+      this.userPreferences[username].followedCommunities.push(communityId);
+      console.log(`User ${username} now follows community ID ${communityId}`);
+    }
+    
+    this._saveToLocalStorage();
+    return Promise.resolve({ success: true });
+  } catch (error) {
+    console.error('Error in followCommunity:', error);
+    return Promise.resolve({ success: false, error: error.message });
+  }
+}
+
+
   createCommunity(communityData) {
     const newCommunity = {
       ...communityData,
@@ -435,6 +708,8 @@ class CritiqueService {
 
         if (savedCommunities) {
           this.communities = JSON.parse(savedCommunities);
+        } else {
+          console.log('No communities found in localStorage');
         }
         if (savedPosts) {
           this.critiquePosts = JSON.parse(savedPosts);
@@ -476,8 +751,11 @@ class CritiqueService {
         localStorage.setItem('critiquePosts', JSON.stringify(this.critiquePosts));
         localStorage.setItem('whiteboardData', JSON.stringify(this.whiteboardData));
         localStorage.setItem('userPreferences', JSON.stringify(this.userPreferences));
+        console.log('- Saved communities:', this.communities.length);
+
       } catch (e) {
         console.error('Error saving to localStorage:', e);
+        
       }
     }
   }

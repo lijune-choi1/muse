@@ -1,6 +1,64 @@
-// Updated CommentBubble.jsx with reactions and reply feature
-import React, { useState, useEffect } from 'react';
+// CommentBubble.jsx with inline SVG icons
+import React, { useState, useEffect, useRef } from 'react';
 import './CommentBubble.css';
+
+// Simple SVG Icon component
+const Icon = ({ type, size = 16, color = "currentColor" }) => {
+  const icons = {
+    check: (
+      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+    ),
+    x: (
+      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    ),
+    edit: (
+      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+      </svg>
+    ),
+    trash: (
+      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="3 6 5 6 21 6"></polyline>
+        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+      </svg>
+    ),
+    message: (
+      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+      </svg>
+    ),
+    thumbsUp: (
+      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+      </svg>
+    ),
+    thumbsDown: (
+      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm10-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"></path>
+      </svg>
+    ),
+    send: (
+      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="22" y1="2" x2="11" y2="13"></line>
+        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+      </svg>
+    ),
+    link: (
+      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+      </svg>
+    )
+  };
+
+  return icons[type] || null;
+};
 
 const CommentBubble = ({ 
   comment, 
@@ -11,9 +69,11 @@ const CommentBubble = ({
   onClose,
   onReactionChange,
   onReplyAdd,
-  userProfile // Prop for user information
+  userProfile,
+  displayMode = 'hover'
 }) => {
-  const [isEditing, setIsEditing] = useState(false);
+  // Main state
+  const [localDisplayMode, setLocalDisplayMode] = useState(displayMode);
   const [localComment, setLocalComment] = useState({
     ...comment,
     text: comment.content || comment.text || "",
@@ -21,7 +81,14 @@ const CommentBubble = ({
     replies: comment.replies || []
   });
   
-  // Add state for reactions and replies
+  const bubbleRef = useRef(null);
+  
+  // Update local display mode when prop changes
+  useEffect(() => {
+    setLocalDisplayMode(displayMode);
+  }, [displayMode]);
+  
+  // Additional states
   const [userReacted, setUserReacted] = useState({ 
     agreed: comment.userReacted?.agreed || false, 
     disagreed: comment.userReacted?.disagreed || false 
@@ -48,25 +115,40 @@ const CommentBubble = ({
   // Get current category info or default to technical
   const currentCategory = categoryInfo[localComment.type?.toLowerCase()] || categoryInfo.technical;
 
-  // Allow editing on single click
-  const handleClick = () => {
-    setIsEditing(true);
+  // Handle double-click to edit
+  const handleDoubleClick = (e) => {
+    e.stopPropagation();
+    setLocalDisplayMode('edit');
   };
 
+  // Handle click on comment bubble
+  const handleClick = (e) => {
+    e.stopPropagation();
+    if (localDisplayMode === 'hover') {
+      setLocalDisplayMode('expanded');
+    }
+  };
+
+  // Handle mouse enter on the bubble itself
+  const handleBubbleMouseEnter = (e) => {
+    // Keep the bubble visible when mouse enters it
+    e.stopPropagation();
+  };
+
+  // Handle saving edits
   const handleSave = () => {
-    // Save changes
     onContentChange(localComment.id, localComment.text);
     onTypeChange(localComment.id, localComment.type);
-    setIsEditing(false);
+    setLocalDisplayMode('expanded');
   };
 
+  // Handle canceling edits
   const handleCancel = () => {
-    // Revert to original comment
     setLocalComment({
       ...comment,
       text: comment.content || comment.text || ""
     });
-    setIsEditing(false);
+    setLocalDisplayMode('expanded');
   };
 
   // Cycle through comment types on right-click
@@ -145,7 +227,7 @@ const CommentBubble = ({
     const newReply = {
       id: `reply-${Date.now()}`,
       author: userProfile?.name || "Anonymous",
-      avatar: userProfile?.avatar || "/default-avatar.png",
+      avatar: userProfile?.avatar || "/assets/images/default-avatar.png",
       content: replyText,
       timestamp: new Date().toISOString()
     };
@@ -182,27 +264,84 @@ const CommentBubble = ({
     return date.toLocaleDateString();
   };
 
-  // Rendering logic
-  let bubbleContent;
-  let bubbleClass = "comment-bubble";
+  // Truncate text for hover view
+  const truncateText = (text, maxLength = 50) => {
+    if (!text) return "No content";
+    return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
+  };
 
   // Determine user profile information
   const userName = userProfile?.name || "Anonymous";
-  const userAvatar = userProfile?.avatar || "/default-avatar.png";
   
   // Check if comment has replies
   const hasReplies = localComment.replies && localComment.replies.length > 0;
 
-  if (isEditing) {
+  // Rendering based on display mode
+  let bubbleContent;
+  let bubbleClass = "comment-bubble";
+
+  // Add the appropriate class based on display mode
+  switch (localDisplayMode) {
+    case 'hover':
+      bubbleClass += " hover-state";
+      break;
+    case 'expanded':
+      bubbleClass += " expanded";
+      break;
+    case 'edit':
+      bubbleClass += " edit-mode";
+      break;
+    default:
+      bubbleClass += " hover-state";
+  }
+
+  // Generate content based on display mode
+  if (localDisplayMode === 'hover') {
+    // Hover mode - show minimal info
+    bubbleContent = (
+      <>
+        <div className="user-section">
+          <img 
+            src="/assets/images/default-avatar.png" // Placeholder asset image
+            alt={userName} 
+            className="user-icon" 
+          />
+          <div 
+            className={`comment-type-pill ${localComment.type}`} 
+            style={{backgroundColor: currentCategory.color}}
+          >
+            {currentCategory.label}
+          </div>
+        </div>
+        <div className="comment-text">{truncateText(localComment.text)}</div>
+        <div className="hover-reactions">
+          {localComment.reactions.agreed > 0 && (
+            <span className="hover-reaction">
+              <Icon type="thumbsUp" size={14} /> {localComment.reactions.agreed}
+            </span>
+          )}
+          {localComment.reactions.disagreed > 0 && (
+            <span className="hover-reaction">
+              <Icon type="thumbsDown" size={14} /> {localComment.reactions.disagreed}
+            </span>
+          )}
+          {hasReplies && (
+            <span className="hover-reaction">
+              <Icon type="message" size={14} /> {localComment.replies.length}
+            </span>
+          )}
+        </div>
+        <div className="hover-message">Click to expand</div>
+      </>
+    );
+  } else if (localDisplayMode === 'edit') {
     // Edit mode
-    bubbleClass += " edit-mode";
-    
     bubbleContent = (
       <>
         <div className="comment-bubble-header">
           <div className="user-section">
             <img 
-              src={userAvatar} 
+              src="/assets/images/default-avatar.png" // Placeholder asset image
               alt={userName} 
               className="user-icon" 
             />
@@ -214,7 +353,7 @@ const CommentBubble = ({
               className="close-button"
               onClick={handleCancel}
             >
-              ✕
+              <Icon type="x" size={16} />
             </button>
           </div>
         </div>
@@ -260,9 +399,7 @@ const CommentBubble = ({
       </>
     );
   } else {
-    // View mode
-    bubbleClass += " expanded";
-    
+    // Expanded view mode
     bubbleContent = (
       <>
         {/* Show thread badge if comment has replies */}
@@ -278,7 +415,7 @@ const CommentBubble = ({
         >
           <div className="user-section">
             <img 
-              src={userAvatar} 
+              src="/assets/images/default-avatar.png" // Placeholder asset image
               alt={userName} 
               className="user-icon" 
             />
@@ -294,31 +431,37 @@ const CommentBubble = ({
           <div className="header-actions">
             <button 
               className="edit-button"
-              onClick={handleClick}
+              onClick={(e) => {
+                e.stopPropagation();
+                setLocalDisplayMode('edit');
+              }}
               title="Edit comment"
             >
-              ✏️
+              <Icon type="edit" size={16} />
             </button>
             <button 
               className="delete-button"
-              onClick={() => onDelete(localComment.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(localComment.id);
+              }}
               title="Delete comment"
             >
-              🗑️
+              <Icon type="trash" size={16} />
             </button>
             <button 
               className="close-button"
-              onClick={onClose}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onClose) onClose();
+              }}
             >
-              ✕
+              <Icon type="x" size={16} />
             </button>
           </div>
         </div>
         
-        <div 
-          className="comment-content"
-          onClick={handleClick}
-        >
+        <div className="comment-content">
           {localComment.text || "No content provided"}
         </div>
         
@@ -328,7 +471,7 @@ const CommentBubble = ({
             className={`reaction-button agreed ${userReacted.agreed ? 'active' : ''}`}
             onClick={() => handleReaction('agreed')}
           >
-            ✓ Agree
+            <Icon type="thumbsUp" size={14} /> Agree
             {localComment.reactions.agreed > 0 && (
               <span className="reaction-count-comment">{localComment.reactions.agreed}</span>
             )}
@@ -338,7 +481,7 @@ const CommentBubble = ({
             className={`reaction-button disagreed ${userReacted.disagreed ? 'active' : ''}`}
             onClick={() => handleReaction('disagreed')}
           >
-            ✕ Disagree
+            <Icon type="thumbsDown" size={14} /> Disagree
             {localComment.reactions.disagreed > 0 && (
               <span className="reaction-count-comment">{localComment.reactions.disagreed}</span>
             )}
@@ -348,9 +491,13 @@ const CommentBubble = ({
             className="reaction-button reply"
             onClick={() => setShowReplies(!showReplies)}
           >
-            {showReplies ? "Hide Replies" : "Reply"}
-            {hasReplies && !showReplies && (
-              <span className="reaction-count-comment">{localComment.replies.length}</span>
+            {showReplies ? "Hide Replies" : (
+              <>
+                <Icon type="message" size={14} /> Reply
+                {hasReplies && !showReplies && (
+                  <span className="reaction-count-comment">{localComment.replies.length}</span>
+                )}
+              </>
             )}
           </button>
         </div>
@@ -362,7 +509,7 @@ const CommentBubble = ({
             <div key={reply.id} className="reply-item">
               <div className="reply-header">
                 <img 
-                  src={reply.avatar} 
+                  src="/assets/images/default-avatar.png" // Placeholder asset image
                   alt={reply.author} 
                   className="reply-avatar" 
                 />
@@ -389,7 +536,7 @@ const CommentBubble = ({
               className="reply-submit"
               onClick={handleAddReply}
             >
-              Send
+              <Icon type="send" size={14} />
             </button>
           </div>
         </div>
@@ -399,8 +546,11 @@ const CommentBubble = ({
 
   return (
     <div 
+      ref={bubbleRef}
       className={bubbleClass} 
-      onClick={(e) => e.stopPropagation()}
+      onClick={handleClick}
+      onDoubleClick={handleDoubleClick}
+      onMouseEnter={handleBubbleMouseEnter}
     >
       {bubbleContent}
     </div>

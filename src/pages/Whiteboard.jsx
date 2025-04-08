@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import WhiteboardCanvas from '../components/whiteboard/WhiteboardCanvas';
+import CommentSystemExplainer from '../components/whiteboard/CommentSystemExplainer';
 import critiqueService from './CritiqueService';
 import './Whiteboard.css';
 
@@ -32,6 +33,28 @@ const Whiteboard = () => {
   const [expandedCommentId, setExpandedCommentId] = useState(null);
   const [hoveredCommentId, setHoveredCommentId] = useState(null);
   const [score, setScore] = useState({ technical: 0, conceptual: 0, details: 0, total: 0 });
+  
+  // Explainer state
+  const [showExplainer, setShowExplainer] = useState(true);
+  const [explainerDismissed, setExplainerDismissed] = useState(false);
+
+  // Check local storage to see if the user has already seen the explainer
+  useEffect(() => {
+    const hasSeenExplainer = localStorage.getItem('hasSeenCommentExplainer');
+    if (hasSeenExplainer) {
+      setShowExplainer(false);
+      setExplainerDismissed(true);
+    }
+  }, []);
+
+  // Handle explainer dismissal
+  const handleExplainerDismiss = () => {
+    setShowExplainer(false);
+    setExplainerDismissed(true);
+    
+    // Store in local storage so it doesn't show again
+    localStorage.setItem('hasSeenCommentExplainer', 'true');
+  };
 
   // Calculate points based on comment links
   const calculateLinkPoints = (comments) => {
@@ -169,6 +192,11 @@ const Whiteboard = () => {
 
   return (
     <div className="whiteboard-container">
+      {/* Explainer overlay */}
+      {showExplainer && !explainerDismissed && (
+        <CommentSystemExplainer onDismiss={handleExplainerDismiss} />
+      )}
+      
       {/* Top score bar */}
       <div className="scorebar-container">
         <div className="score-item total-points">
@@ -286,16 +314,13 @@ const Whiteboard = () => {
         >
           Stamp Mode
         </button>
+        <button 
+          className="toolbar-button"
+          onClick={() => setShowExplainer(true)}
+        >
+          Help
+        </button>
       </div>
-
-      {/* Add comment button */}
-      <button 
-        className="fab-button"
-        onClick={() => setMode('comment')}
-        title="Add Comment"
-      >
-        +
-      </button>
 
       {/* Zoom controls */}
       <div className="zoom-controls">
@@ -316,4 +341,4 @@ const Whiteboard = () => {
   );
 };
 
-export default Whiteboard
+export default Whiteboard;

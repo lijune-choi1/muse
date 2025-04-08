@@ -76,7 +76,6 @@
   }
   
   .critique-input, .critique-select, .critique-textarea, .thread-selector {
-    width: 100%;
     padding: 0.75rem;
     font-size: 1rem;
     border: 1px solid #ddd;

@@ -146,7 +146,7 @@ const Leaderboard = () => {
       
       <div className="communities-list">
         {topCommunities.map((community, index) => (
-          <div key={community.name} className="community-card">
+          <div key={community.name} className="community-card-2">
             <div className="community-rank">{index + 1}</div>
             <div className="community-info">
               <div className="community-name">{community.name}</div>
@@ -155,7 +155,7 @@ const Leaderboard = () => {
               </div>
             </div>
             <button 
-              className="visit-btn"
+              className="visit-btn-2"
               onClick={() => navigate(`/community/${community.name.replace('r/', '')}`)}
             >
               Visit

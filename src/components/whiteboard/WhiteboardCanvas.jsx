@@ -1,10 +1,9 @@
 // src/components/whiteboard/WhiteboardCanvas.jsx
 import React, { useRef, useEffect, useState } from 'react';
 import CommentTag from '../common/CommentTag';
-import CommentBubble from '../common/CommentBubble';
 import CommentLinking from '../common/CommentLinking';
 import commentService from '../common/CommentService';
-import CollaborativeCommentBubble from '../common/CollaborativeCommentBubble';
+import CommentBubbleManager from './CommentBubbleManager';
 
 const WhiteboardCanvas = ({
   zoom, 
@@ -58,6 +57,24 @@ const WhiteboardCanvas = ({
     name: "Guest User",
     avatar: "/path/to/guest-avatar.jpg"
   };
+
+  // Initialize the comment bubble manager
+  const bubbleManager = CommentBubbleManager({
+    comments,
+    selectedCommentId,
+    expandedCommentId,
+    onCommentSelect,
+    onCommentExpand,
+    onContentChange: handleContentChange,
+    onTypeChange: handleTypeChange,
+    onDelete: handleDeleteComment,
+    onReactionChange: handleReactionChange,
+    onReplyAdd: handleAddReply,
+    zoom,
+    localPan,
+    userProfile,
+    guestProfile
+  });
 
   // Initialize guest presence
   useEffect(() => {
@@ -492,37 +509,9 @@ const WhiteboardCanvas = ({
     // Prevent default browser behavior
     e.preventDefault();
   };
-
-  // Handle comment selection
-  const handleCommentClick = (e, commentId) => {
-    // Don't select if we're starting a drag
-    if (e.button === 0 && e.target.closest('.comment-tag')) {
-      e.stopPropagation();
-    }
-    
-    if (linkingMode) {
-      // In linking mode, clicking selects the target
-      return;
-    }
-    
-    onCommentSelect(commentId);
-    onCommentExpand(commentId);
-    
-    // Simulate guest following your selection
-    if (collaborationEnabled && isGuestPresent) {
-      const comment = comments.find(c => c.id === commentId);
-      if (comment && comment.guestCreated) {
-        setGuestActivity('Guest notices you opened their comment');
-        
-        setTimeout(() => {
-          setGuestActivity(null);
-        }, 2000);
-      }
-    }
-  };
   
   // Handle content change
-  const handleContentChange = (commentId, newContent) => {
+  function handleContentChange(commentId, newContent) {
     setComments(prevComments => 
       prevComments.map(comment => 
         comment.id === commentId 
@@ -544,10 +533,10 @@ const WhiteboardCanvas = ({
         }, 2000);
       }
     }
-  };
+  }
   
   // Handle type change
-  const handleTypeChange = (commentId, newType) => {
+  function handleTypeChange(commentId, newType) {
     setComments(prevComments => 
       prevComments.map(comment => 
         comment.id === commentId 
@@ -557,10 +546,10 @@ const WhiteboardCanvas = ({
     );
     
     commentService.updateCommentType(commentId, newType);
-  };
+  }
   
   // Handle comment deletion
-  const handleDeleteComment = (commentId) => {
+  function handleDeleteComment(commentId) {
     // Check if it's a guest comment
     const isGuestComment = comments.find(c => c.id === commentId)?.guestCreated;
     
@@ -599,7 +588,7 @@ const WhiteboardCanvas = ({
         setGuestActivity(null);
       }, 3000);
     }
-  };
+  }
   
   // Handle comment close
   const handleCloseBubble = () => {
@@ -607,7 +596,7 @@ const WhiteboardCanvas = ({
   };
   
   // Handle reaction change
-  const handleReactionChange = (commentId, reactionData) => {
+  function handleReactionChange(commentId, reactionData) {
     setComments(prevComments => 
       prevComments.map(comment => 
         comment.id === commentId 
@@ -665,10 +654,8 @@ const WhiteboardCanvas = ({
         }, 1000);
       }
     }
-  };
-  
-  // Handle reply adding
-  const handleAddReply = (commentId, reply, updatedReplies) => {
+  }// Handle reply adding
+  function handleAddReply(commentId, reply, updatedReplies) {
     setComments(prevComments => 
       prevComments.map(comment => 
         comment.id === commentId 
@@ -690,7 +677,8 @@ const WhiteboardCanvas = ({
             const guestReply = {
               id: `reply-guest-${Date.now()}`,
               author: 'Guest User',
-              text: 'Thanks for your input! Ill take that into consideration.',
+              avatar: guestProfile.avatar,
+              content: 'Thanks for your input! I\'ll take that into consideration.',
               timestamp: new Date().toISOString()
             };
             
@@ -711,7 +699,7 @@ const WhiteboardCanvas = ({
         }, 2000);
       }
     }
-  };
+  }
   
   // Start linking mode
   const handleStartLinking = (commentId) => {
@@ -895,20 +883,17 @@ const WhiteboardCanvas = ({
               cursor: draggedCommentId === comment.id ? 'grabbing' : 'grab',
               zIndex: 5
             }}
+            data-tag-id={comment.id}
             onMouseDown={(e) => handleCommentDragStart(e, comment.id)}
-            onClick={(e) => handleCommentClick(e, comment.id)}
+            onClick={(e) => bubbleManager.handleCommentClick(e, comment.id)}
+            onDoubleClick={(e) => bubbleManager.handleCommentDoubleClick(e, comment.id)}
+            onMouseEnter={() => bubbleManager.handleCommentTagEnter(comment.id)}
+            onMouseLeave={() => bubbleManager.handleCommentTagLeave(comment.id)}
           >
             <CommentTag
               comment={comment}
               isSelected={selectedCommentId === comment.id}
               isBeingEdited={guestCommentBeingEdited === comment.id}
-              onDoubleClick={() => {
-                // Double click to edit comment
-                onCommentSelect(comment.id);
-                onCommentExpand(comment.id);
-              }}
-              onMouseEnter={() => onCommentHover && onCommentHover(comment.id)}
-              onMouseLeave={() => onCommentHover && onCommentHover(null)}
               onLinkClick={() => handleStartLinking(comment.id)}
               userProfile={comment.guestCreated ? guestProfile : userProfile}
             />
@@ -930,72 +915,9 @@ const WhiteboardCanvas = ({
         {renderLinks()}
       </div>
       
-      {/* Comment bubble for expanded comment */}
-      {expandedCommentId && !linkingMode && (
-        (() => {
-          const selectedComment = comments.find(c => c.id === expandedCommentId);
-          if (!selectedComment) return null;
-          
-          // Position the bubble to the right of the comment
-          const commentX = selectedComment.position.x * zoom + localPan.x;
-          const commentY = selectedComment.position.y * zoom + localPan.y;
-          const bubbleX = commentX + 60; // Fixed offset to the right
-          
-          // Use collaborative comment bubble if enabled
-          if (useCollaborativeComments) {
-            return (
-              <div 
-                style={{
-                  position: 'absolute',
-                  left: `${bubbleX}px`,
-                  top: `${commentY}px`,
-                  transform: 'translate(0, -50%)',
-                  transformOrigin: 'left center',
-                  pointerEvents: 'auto',
-                  zIndex: 10
-                }}
-              >
-                <CollaborativeCommentBubble
-                  comment={selectedComment}
-                  onContentChange={handleContentChange}
-                  onTypeChange={handleTypeChange}
-                  onDelete={handleDeleteComment}
-                  onClose={handleCloseBubble}
-                  onReactionChange={handleReactionChange}
-                  onReplyAdd={handleAddReply}
-                  userProfile={selectedComment.guestCreated ? guestProfile : userProfile}
-                />
-              </div>
-            );
-          }
-          
-          // Default comment bubble
-          return (
-            <div 
-              style={{
-                position: 'absolute',
-                left: `${bubbleX}px`,
-                top: `${commentY}px`,
-                transform: 'translate(0, -50%)',
-                transformOrigin: 'left center',
-                pointerEvents: 'auto',
-                zIndex: 10
-              }}
-            >
-              <CommentBubble
-                comment={selectedComment}
-                onContentChange={handleContentChange}
-                onTypeChange={handleTypeChange}
-                onDelete={handleDeleteComment}
-                onClose={handleCloseBubble}
-                onReactionChange={handleReactionChange}
-                onReplyAdd={handleAddReply}
-                userProfile={selectedComment.guestCreated ? guestProfile : userProfile}
-              />
-            </div>
-          );
-        })()
-      )}
+      {/* Render hover and expanded comment bubbles */}
+      {bubbleManager.renderHoverBubbles()}
+      {bubbleManager.renderExpandedBubble()}
       
       {/* Comment linking overlay when in linking mode */}
       {linkingMode && linkingSourceId && (

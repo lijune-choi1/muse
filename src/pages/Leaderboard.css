@@ -184,7 +184,7 @@
   margin: 0 auto;
 }
 
-.community-card {
+.community-card-2 {
   display: flex;
   align-items: center;
   padding: 20px;
@@ -209,6 +209,7 @@
 
 .community-info {
   flex: 1;
+  gap:20px;
   margin-left: 20px;
 }
 
@@ -223,7 +224,7 @@
   font-size: 0.9rem;
 }
 
-.visit-btn {
+.visit-btn-2 {
   background-color: #000;
   color: white;
   border: none;
