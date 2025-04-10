@@ -1,9 +1,9 @@
 // src/pages/ThreadView.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import Sidebar from '../layout/Sidebar';
-import Navbar from '../layout/Navbar';
-import Button from './Button';
+import Sidebar from '../components/layout/Sidebar';
+import Navbar from '../components/layout/Navbar';
+import Button from '../components/common/Button';
 import critiqueService from '../services/CritiqueService';
 import './ThreadView.css';
 
