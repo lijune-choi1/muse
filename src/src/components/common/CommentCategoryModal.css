@@ -1,0 +1,108 @@
+/* src/components/common/CommentCategoryModal.css */
+.comment-category-modal {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    width: 350px;
+    max-width: 90vw;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  }
+  
+  .category-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .category-modal-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+  }
+  
+  .category-modal-close {
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    color: #777;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+  }
+  
+  .category-modal-close:hover {
+    background-color: #f0f0f0;
+  }
+  
+  .category-options {
+    padding: 10px 0;
+  }
+  
+  .category-option {
+    display: flex;
+    padding: 12px 20px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    align-items: center;
+  }
+  
+  .category-option:hover {
+    background-color: #f5f5f5;
+  }
+  
+  .category-color-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    margin-right: 15px;
+    flex-shrink: 0;
+  }
+  
+  .category-details {
+    flex-grow: 1;
+  }
+  
+  .category-details h4 {
+    margin: 0 0 5px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+  }
+  
+  .category-details p {
+    margin: 0;
+    font-size: 12px;
+    color: #666;
+    line-height: 1.4;
+  }
+  
+  .category-modal-footer {
+    padding: 12px 20px;
+    display: flex;
+    justify-content: flex-end;
+    border-top: 1px solid #eee;
+  }
+  
+  .category-modal-cancel {
+    background: none;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 6px 15px;
+    font-size: 14px;
+    cursor: pointer;
+    color: #333;
+    transition: background-color 0.2s;
+  }
+  
+  .category-modal-cancel:hover {
+    background-color: #f0f0f0;
+  }

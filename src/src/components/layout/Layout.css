@@ -1,0 +1,30 @@
+/* src/components/layout/Layout.css */
+.layout {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: rgb(255, 253, 250);
+
+  }
+  
+  .content-wrapper {
+    display: flex;
+    flex: 1;
+  }
+  
+  .sidebar-container {
+    width: 200px;
+    border: 1px solid rgb(213, 213, 213);
+    background:rgb(243, 238, 233);
+    flex-shrink: 0;
+  }
+  
+  .main-content {
+    flex: 1;
+    margin-top:16px;
+    padding:24px;
+  }
+
+  .nav{
+    position:fixed;
+  }

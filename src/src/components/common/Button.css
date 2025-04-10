@@ -1,0 +1,46 @@
+/* src/components/common/Button.css */
+.btn {
+  font-family: inherit;
+  font-weight: 500;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-default {
+  background-color: white;
+  color: #333;
+  border: 1px solid #ddd;
+}
+
+.btn-default:hover {
+  background-color: #f5f5f5;
+}
+
+.btn-primary {
+  background-color: #000;
+  color: white;
+  border: 1px solid #000;
+}
+
+.btn-primary:hover {
+  background-color: #333;
+}
+
+.btn-small {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+.btn-medium {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+.btn-large {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+}

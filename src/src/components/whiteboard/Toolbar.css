@@ -1,0 +1,107 @@
+/* src/components/whiteboard/Toolbar.css */
+.toolbar-container {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  background-color: #ffffff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 100;
+  align-items: center;
+}
+
+.toolbar-button {
+  padding: 12px 20px;
+  color: black;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  background: none;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.toolbar-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.toolbar-button.active {
+  background-color: rgba(0, 0, 0, 0.1);
+  font-weight: 600;
+}
+
+/* Mode group containing mode button and its controls */
+.mode-group {
+  display: flex;
+  align-items: center;
+  border-right: 1px solid #eee;
+}
+
+/* Controls that appear next to the Comment Mode button */
+.mode-controls {
+  display: flex;
+  padding: 0 12px;
+  gap: 15px;
+  border-left: 1px solid #eee;
+  height: 100%;
+  align-items: center;
+}
+
+/* Individual control options (checkboxes) */
+.control-option {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  cursor: pointer;
+  user-select: none;
+  color: #555;
+}
+
+.control-option input {
+  margin: 0;
+  cursor: pointer;
+}
+
+.control-option span {
+  margin-top: 1px;
+}
+
+/* Special styling for annotation mode button */
+.toolbar-button[class*='annotate'].active {
+  color: #ff4136;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .toolbar-container {
+    width: 95%;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .mode-group {
+    flex-direction: column;
+    border-right: none;
+    border-bottom: 1px solid #eee;
+    width: 100%;
+  }
+  
+  .mode-controls {
+    width: 100%;
+    justify-content: center;
+    padding: 8px;
+    border-left: none;
+    border-top: 1px solid #eee;
+  }
+  
+  .toolbar-button {
+    padding: 10px 15px;
+    width: 100%;
+    text-align: center;
+  }
+}

@@ -1,0 +1,812 @@
+/* Whiteboard.css */
+.whiteboard-container {
+  position: relative;
+  width: 100%;
+  height: 95vh;
+  overflow: hidden;
+  background: transparent;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+.canvas-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+}
+
+/* Top bar with metrics */
+.scorebar-container {
+  position: absolute;
+  top: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  padding: 12px 20px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  color: black;
+  z-index: 100;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.score-item {
+  display: flex;
+  align-items: center;
+  margin: 0 15px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.score-label {
+  margin-right: 8px;
+}
+
+.score-value {
+  font-weight: 600;
+}
+
+.total-points {
+  border-right: 1px solid rgba(255, 255, 255, 0.3);
+  padding-right: 15px;
+  margin-right: 0;
+}
+
+/* Goal indicator on the right */
+.goal-container {
+  position: absolute;
+  top: 48px;
+  right: 20px;
+  display: flex;
+  padding: 12px 20px;
+  background-color: white;
+  border-radius: 8px;
+  color: black;
+  z-index: 100;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.goal-label {
+  margin-right: 10px;
+  font-weight: 500;
+}
+
+.comment-count {
+  font-weight: 600;
+}
+
+/* Mode toolbar at the bottom */
+.toolbar-container {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  background-color: #ffffff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 100;
+}
+
+.toolbar-button {
+  padding: 12px 20px;
+  color: black;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  background: none;
+  font-size: 14px;
+}
+
+.toolbar-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.toolbar-button.active {
+  background-color: rgba(0, 0, 0, 0.1);
+  font-weight: 600;
+}
+
+/* Special styling for annotation mode button */
+.toolbar-button[class*='annotate'] {
+  position: relative;
+}
+
+.toolbar-button[class*='annotate']:after {
+  content: '';
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70%;
+  height: 2px;
+  background-color: transparent;
+  transition: background-color 0.2s;
+}
+
+.toolbar-button[class*='annotate'].active:after {
+  background-color: #ff4136;
+}
+
+.toolbar-button[class*='annotate'].active {
+  color: #ff4136;
+}
+
+/* Whiteboard placeholder */
+.whiteboard-placeholder {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: auto;
+  height: auto;
+  max-width: 70%;
+  max-height: 70%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid #000000;
+  background-color: white;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+/* Annotation mode styles */
+.annotation-controls {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 101;
+  display: flex;
+  align-items: center;
+}
+
+.color-button {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  margin: 0 4px;
+  transition: transform 0.2s ease;
+}
+
+.color-button:hover {
+  transform: scale(1.1);
+}
+
+.color-button.active {
+  border: 3px solid #333;
+}
+
+.tool-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin: 0 4px;
+  transition: all 0.2s ease;
+  border: 1px solid #ddd;
+  background-color: white;
+}
+
+.tool-button:hover {
+  background-color: #f5f5f5;
+}
+
+.tool-button.active {
+  border: 2px solid #333;
+  background-color: #f0f0f0;
+}
+
+.annotation-badge {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  background-color: #ff4136;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-weight: bold;
+  font-size: 14px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 101;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 65, 54, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 65, 54, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 65, 54, 0);
+  }
+}
+
+/* Add comment button */
+.fab-button {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: #333;
+  color: white;
+  font-size: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  border: none;
+  transition: transform 0.2s, background-color 0.2s;
+  z-index: 100;
+}
+
+.fab-button:hover {
+  transform: scale(1.05);
+  background-color: #444;
+}
+
+/* Zoom controls */
+.zoom-controls {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  background-color: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+}
+
+.zoom-button {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-size: 18px;
+  color: #333;
+  transition: background-color 0.2s;
+}
+
+.zoom-button:hover {
+  background-color: #f0f0f0;
+}
+
+.zoom-value {
+  padding: 5px 0;
+  font-size: 12px;
+  text-align: center;
+  color: #555;
+  border-top: 1px solid #eee;
+  border-bottom: 1px solid #eee;
+}
+
+/* Comments and Stamps display */
+.comment-tag .comment-pin {
+  background-color: #ff4136; /* Red color as shown in the wireframe */
+}
+
+.stamp-icon {
+  background-color: #111;
+  color: white;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+}
+
+/* Fullscreen button */
+.fullscreen-button {
+  position: absolute;
+  top: 32px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  border: none;
+  font-size: 16px;
+  color: #333;
+  z-index: 100;
+}
+
+/* Color picker styles */
+.color-picker-container {
+  position: absolute;
+  bottom: 130px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  padding: 12px;
+  z-index: 102;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  width: 280px;
+}
+
+.color-picker-option {
+  width: 36px;
+  height: 36px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.color-picker-option:hover {
+  transform: scale(1.1);
+}
+
+.color-picker-option.active {
+  border: 3px solid #333;
+}
+
+/* Annotation stroke width control */
+.stroke-width-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stroke-width-preview {
+  height: 2px;
+  background-color: black;
+  border-radius: 2px;
+}
+
+.stroke-width-button {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+}
+
+.stroke-width-button:hover {
+  background-color: #f0f0f0;
+}
+
+.stroke-width-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .scorebar-container, .goal-container {
+    padding: 8px 15px;
+    font-size: 12px;
+  }
+  
+  .toolbar-button {
+    padding: 10px 15px;
+    font-size: 12px;
+  }
+  
+  .fab-button {
+    width: 45px;
+    height: 45px;
+    font-size: 20px;
+  }
+  
+  .annotation-controls {
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 90%;
+    max-width: 450px;
+  }
+}
+
+/* Add to your Whiteboard.css file */
+
+/* Disabled toolbar button style */
+.toolbar-button.disabled {
+  color: #999;
+  background-color: #f5f5f5;
+}
+
+.toolbar-button.disabled:hover {
+  background-color: #f0f0f0;
+}
+
+/* Link visibility toggle styles */
+.link-visibility-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 8px;
+  position: absolute;
+  bottom: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 4px;
+  font-size: 12px;
+  color: #555;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  z-index: 99;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.link-visibility-indicator.hidden {
+  opacity: 0;
+}
+
+/* Add to your Whiteboard.css file */
+
+/* Comment Cluster styling */
+.comment-cluster {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  color: white;
+  font-weight: bold;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  cursor: pointer;
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+  user-select: none;
+}
+
+.comment-cluster:hover {
+  transform: translate(-50%, -50%) scale(1.05);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+}
+
+.comment-cluster.selected {
+  transform: translate(-50%, -50%) scale(1.1);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.7);
+}
+
+/* Comment Thread styling */
+.comment-thread-container {
+  background-color: white;
+  border-radius: 6px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+  overflow: hidden;
+  animation: thread-appear 0.3s ease-out;
+}
+
+.thread-header {
+  padding: 10px 15px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #eaecef;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.thread-pagination {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.thread-pagination button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  color: #555;
+  padding: 3px 6px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.thread-pagination button:hover:not(:disabled) {
+  background-color: #eee;
+}
+
+.thread-pagination button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.thread-comment {
+  padding: 15px;
+}
+
+.comment-type-label {
+  font-size: 11px;
+  font-weight: bold;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+  letter-spacing: 0.5px;
+}
+
+.comment-content {
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 15px;
+  word-break: break-word;
+}
+
+.comment-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: #666;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+}
+
+.comment-actions {
+  display: flex;
+  gap: 15px;
+}
+
+.comment-actions button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  transition: color 0.2s;
+}
+
+.comment-actions button:hover {
+  text-decoration: underline;
+}
+
+.comment-reactions {
+  margin-top: 12px;
+  display: flex;
+  gap: 10px;
+}
+
+.reaction-button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border: 1px solid #ddd;
+  border-radius: 15px;
+  background: white;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.reaction-button:hover {
+  background-color: #f5f5f5;
+}
+
+.reaction-button.active {
+  font-weight: 500;
+}
+
+@keyframes thread-appear {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Additional CSS for the clustering features */
+
+/* Clustering tooltip fade-in animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Comment cluster styling */
+.comment-cluster {
+  position: absolute;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-weight: bold;
+  font-size: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+  z-index: 10;
+  user-select: none;
+  animation: clusterAppear 0.3s ease-out;
+}
+
+.comment-cluster:hover {
+  transform: translate(-50%, -50%) scale(1.05);
+  box-shadow: 0 3px 12px rgba(0,0,0,0.3);
+  z-index: 11;
+}
+
+.comment-cluster.selected {
+  transform: translate(-50%, -50%) scale(1.1);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.7), 0 4px 15px rgba(0,0,0,0.3);
+  z-index: 12;
+}
+
+/* Thread container */
+.comment-thread-container {
+  width: 280px;
+  background-color: white;
+  border-radius: 6px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  overflow: hidden;
+  animation: thread-appear 0.3s ease-out;
+  z-index: 100;
+}
+
+.thread-header {
+  padding: 12px 15px;
+  background-color: #f6f8fa;
+  border-bottom: 1px solid #e1e4e8;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.thread-pagination {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.thread-pagination button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  color: #555;
+  padding: 3px 6px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.thread-pagination button:hover:not(:disabled) {
+  background-color: #eee;
+}
+
+.thread-pagination button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.thread-comment {
+  padding: 15px;
+}
+
+.comment-type-label {
+  font-size: 11px;
+  font-weight: bold;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+  letter-spacing: 0.5px;
+}
+
+.comment-content {
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 15px;
+  word-break: break-word;
+}
+
+.comment-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: #666;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+}
+
+.comment-actions {
+  display: flex;
+  gap: 15px;
+}
+
+.comment-actions button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  transition: color 0.2s;
+}
+
+.comment-actions button:hover {
+  text-decoration: underline;
+}
+
+.comment-reactions {
+  margin-top: 12px;
+  display: flex;
+  gap: 10px;
+}
+
+.reaction-button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border: 1px solid #ddd;
+  border-radius: 15px;
+  background: white;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.reaction-button:hover {
+  background-color: #f5f5f5;
+}
+
+.reaction-button.active {
+  font-weight: 500;
+}
+
+/* Cluster animations */
+@keyframes clusterAppear {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes thread-appear {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Toolbar button styles */
+.toolbar-button.disabled {
+  color: #777;
+  background-color: #f5f5f5;
+}
+
+.toolbar-button.disabled:hover {
+  background-color: #eeeeee;
+}

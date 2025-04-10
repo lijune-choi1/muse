@@ -1,0 +1,122 @@
+/* src/components/common/CommentLinking.css */
+.comment-linking-mode {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 50;
+    pointer-events: none;
+  }
+  
+  .linking-instructions {
+    position: absolute;
+    top: 86px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.8);
+    padding: 12px 20px;
+    border-radius: 8px;
+    color: white;
+    font-size: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    pointer-events: auto;
+    z-index: 101;
+  }
+  
+  .linking-source-info {
+    font-weight: 500;
+  }
+  
+  .linking-target-info {
+    color: #ccc;
+    font-size: 12px;
+  }
+  
+  .linking-cancel-button {
+    margin-top: 8px;
+    padding: 6px 14px;
+    border: none;
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .linking-cancel-button:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+  }
+  
+  .link-preview-svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 52;
+  }
+  
+  .link-preview {
+    animation: linkPreviewFade 0.2s ease-in-out;
+  }
+  
+  @keyframes linkPreviewFade {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  
+  .linking-target-overlay {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    pointer-events: auto;
+    z-index: 53;
+    transition: all 0.2s;
+  }
+  
+  .linking-target-overlay:hover {
+    background-color: rgba(255, 255, 255, 0.4);
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+  
+  .linking-target-overlay.existing-link {
+    border: 2px solid #9B59B6;
+    background-color: rgba(155, 89, 182, 0.3);
+  }
+  
+  .linking-source-highlight {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 52;
+    animation: sourceHighlight 1.5s infinite alternate;
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.5);
+  }
+  
+  @keyframes sourceHighlight {
+    0% { box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.6); }
+    100% { box-shadow: 0 0 0 8px rgba(255, 255, 255, 0.2); }
+  }
+  
+  .existing-link {
+    stroke-width: 3;
+    stroke-dasharray: none;
+    animation: existingLinkPulse 2s infinite;
+  }
+  
+  @keyframes existingLinkPulse {
+    0% { stroke-opacity: 0.4; }
+    50% { stroke-opacity: 1; }
+    100% { stroke-opacity: 0.4; }
+  }
