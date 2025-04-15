@@ -403,7 +403,7 @@ const CritiqueRoom = ({ communityKey }) => {
                       {threads.map((thread) => (
                         <div key={thread.id} className="thread-container">
                           <div className="critique-post thread-item">
-                            <div className="thread-badge">Thread</div>
+                            <div className="thread-badge2">Thread</div>
                             <div className="post-header">
                               <div className="post-author-info">
                                 <UserAvatar 
