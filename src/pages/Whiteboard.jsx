@@ -373,6 +373,7 @@ const Whiteboard = () => {
       {/* Collaboration control panel */}
       <div 
         style={{
+          display: 'none',
           position: 'absolute', 
           top: '10px', 
           right: '10px', 
