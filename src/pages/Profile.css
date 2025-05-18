@@ -1,0 +1,243 @@
+/* src/pages/Profile.css */
+.profile-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  
+  .profile-header {
+    display: flex;
+    margin-bottom: 40px;
+    background-color: white;
+    border-radius: 8px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  .profile-avatar {
+    margin-right: 32px;
+    flex-shrink: 0;
+  }
+  
+  .avatar-image {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background-color: #ff8400;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    font-weight: bold;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  }
+  
+  .profile-info {
+    flex: 1;
+  }
+  
+  .profile-username {
+    font-size: 24px;
+    margin: 0 0 8px 0;
+    color: #333;
+  }
+  
+  .profile-email {
+    color: #666;
+    margin: 0 0 16px 0;
+    font-size: 14px;
+  }
+  
+  .profile-bio {
+    margin-bottom: 24px;
+  }
+  
+  .profile-bio h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #333;
+  }
+  
+  .profile-bio p {
+    color: #555;
+    line-height: 1.5;
+  }
+  
+  .profile-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+  }
+  
+  .profile-content {
+    background-color: white;
+    border-radius: 8px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  .profile-tabs {
+    display: flex;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 24px;
+  }
+  
+  .tab-button {
+    padding: 12px 24px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    color: #666;
+    position: relative;
+    transition: color 0.3s;
+  }
+  
+  .tab-button:hover {
+    color: #ff8400;
+  }
+  
+  .tab-button.active {
+    color: #ff8400;
+    font-weight: 600;
+  }
+  
+  .tab-button.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background-color: #ff8400;
+  }
+  
+  .tab-content {
+    min-height: 300px;
+  }
+  
+  .posts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+  }
+  
+  .communities-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+  }
+  
+  .community-card {
+    padding: 16px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  
+  .community-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .community-name {
+    font-size: 18px;
+    margin: 0 0 8px 0;
+    color: #333;
+  }
+  
+  .community-description {
+    color: #666;
+    margin-bottom: 16px;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  
+  .community-stats {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: #777;
+  }
+  
+  .empty-state {
+    text-align: center;
+    padding: 48px 0;
+    color: #666;
+  }
+  
+  .empty-state p {
+    margin-bottom: 24px;
+  }
+  
+  .loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+    color: #666;
+  }
+  
+  /* Form styling for edit mode */
+  .edit-profile-form {
+    width: 100%;
+  }
+  
+  .form-group {
+    margin-bottom: 16px;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    color: #555;
+  }
+  
+  .form-control {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+  
+  textarea.form-control {
+    resize: vertical;
+  }
+  
+  /* Mobile responsiveness */
+  @media (max-width: 768px) {
+    .profile-header {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    
+    .profile-avatar {
+      margin-right: 0;
+      margin-bottom: 24px;
+    }
+    
+    .profile-actions {
+      justify-content: center;
+    }
+    
+    .profile-tabs {
+      overflow-x: auto;
+      white-space: nowrap;
+      padding-bottom: 8px;
+    }
+    
+    .tab-button {
+      padding: 12px 16px;
+    }
+    
+    .posts-grid,
+    .communities-list {
+      grid-template-columns: 1fr;
+    }
+  }

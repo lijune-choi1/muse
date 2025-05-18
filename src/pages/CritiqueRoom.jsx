@@ -322,7 +322,7 @@ const CritiqueRoom = ({ communityKey }) => {
                       <h2 className="section-title">Most Recent</h2>
                       <div className="critique-post main-post">
                         {mostRecentPost.threadId === null && (
-                          <div className="thread-badge2">Thread</div>
+                          <div className="thread-badge">Thread</div>
                         )}
                         <div className="post-header">
                           <div className="post-author-info">

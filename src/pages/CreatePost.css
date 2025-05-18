@@ -1,0 +1,145 @@
+/* src/pages/CreatePost.css */
+.create-post-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  
+  .page-title {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 24px;
+    color: #333;
+  }
+  
+  .error-message {
+    background-color: #ffebee;
+    color: #c62828;
+    padding: 12px 16px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    border-left: 4px solid #c62828;
+  }
+  
+  .loading-spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+    color: #666;
+  }
+  
+  .create-post-form {
+    background-color: white;
+    border-radius: 8px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  .form-group {
+    margin-bottom: 20px;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #333;
+  }
+  
+  .form-control {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: border-color 0.2s;
+  }
+  
+  .form-control:focus {
+    outline: none;
+    border-color: #ff8400;
+    box-shadow: 0 0 0 2px rgba(255, 132, 0, 0.2);
+  }
+  
+  .form-control:disabled {
+    background-color: #f5f5f5;
+    cursor: not-allowed;
+  }
+  
+  textarea.form-control {
+    min-height: 120px;
+    resize: vertical;
+  }
+  
+  .image-upload-container {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .file-input {
+    margin-bottom: 16px;
+  }
+  
+  .image-preview {
+    margin-top: 16px;
+    border: 1px solid #eee;
+    padding: 8px;
+    border-radius: 4px;
+    max-width: 100%;
+  }
+  
+  .image-preview img {
+    max-width: 100%;
+    max-height: 300px;
+    object-fit: contain;
+  }
+  
+  .form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 32px;
+  }
+  
+  /* Community guidelines section - for future use */
+  .community-guidelines {
+    margin-top: 20px;
+    padding: 16px;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+    border-left: 4px solid #ff8400;
+  }
+  
+  .community-guidelines h3 {
+    font-size: 16px;
+    margin-bottom: 12px;
+    color: #333;
+  }
+  
+  .community-guidelines ul {
+    padding-left: 20px;
+  }
+  
+  .community-guidelines li {
+    margin-bottom: 8px;
+    color: #555;
+  }
+  
+  /* Mobile responsiveness */
+  @media (max-width: 768px) {
+    .create-post-container {
+      padding: 16px;
+    }
+    
+    .create-post-form {
+      padding: 16px;
+    }
+    
+    .form-actions {
+      flex-direction: column;
+    }
+    
+    .form-actions button {
+      width: 100%;
+    }
+  }

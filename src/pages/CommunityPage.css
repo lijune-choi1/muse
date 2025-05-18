@@ -1,0 +1,261 @@
+/* src/pages/CommunityPage.css */
+
+.community-page {
+    padding: 1rem;
+  }
+  
+  .critique-room-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+  }
+  
+  .critique-room-title-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .circle-button {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid #ddd;
+    background-color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  
+  .critique-room-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+  }
+  
+  .critique-room-actions {
+    display: flex;
+    gap: 0.75rem;
+  }
+  
+  .primary-button, .secondary-button, .join-button {
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: center;
+  }
+  
+  .primary-button {
+    background-color: #000000;
+    color: white;
+    border: none;
+  }
+  
+  .primary-button:hover {
+    background-color: #2a2a2a;
+  }
+  
+  .secondary-button {
+    background-color: #f5f5f5;
+    color: #333;
+    border: 1px solid #ddd;
+  }
+  
+  .secondary-button:hover {
+    background-color: #e8e8e8;
+  }
+  
+  .join-button {
+    background-color: #0066cc;
+    color: white;
+    border: none;
+  }
+  
+  .join-button:hover {
+    background-color: #0055aa;
+  }
+  
+  .join-button.following {
+    background-color: #e0e0e0;
+    color: #333;
+  }
+  
+  .critique-content-container {
+    display: flex;
+    gap: 2rem;
+  }
+  
+  .critique-posts-section {
+    flex: 1;
+  }
+  
+  .posts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+  
+  .empty-community-message {
+    text-align: center;
+    padding: 3rem;
+    background-color: #f9f9f9;
+    border-radius: 0.5rem;
+  }
+  
+  .community-sidebar-container {
+    width: 320px;
+    background-color: white;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    padding: 1.5rem;
+    height: fit-content;
+    position: sticky;
+    top: 80px;
+  }
+  
+  .community-header {
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .community-name {
+    font-size: 1.25rem;
+    margin: 0;
+  }
+  
+  .community-description {
+    margin-bottom: 1rem;
+    color: #555;
+    line-height: 1.5;
+  }
+  
+  .community-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.875rem;
+    color: #777;
+    margin-bottom: 1rem;
+  }
+  
+  .community-stats {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 1.5rem;
+    padding: 1rem 0;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .stat-group {
+    text-align: center;
+  }
+  
+  .stat-value {
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+  
+  .stat-label {
+    font-size: 0.875rem;
+    color: #777;
+  }
+  
+  .community-section {
+    margin-bottom: 1.5rem;
+  }
+  
+  .section-title {
+    font-size: 0.875rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    color: #555;
+    letter-spacing: 0.05em;
+  }
+  
+  .guidelines-list, .rules-list {
+    font-size: 0.9375rem;
+    color: #333;
+  }
+  
+  .guideline-item {
+    margin-bottom: 0.5rem;
+    padding-left: 0.75rem;
+    border-left: 3px solid #0066cc;
+  }
+  
+  .rule-item {
+    margin-bottom: 0.5rem;
+    margin-left: 1.5rem;
+  }
+  
+  .moderators-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .moderator-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  
+  .moderator-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: #ddd;
+  }
+  
+  .moderator-name {
+    font-size: 0.9375rem;
+  }
+  
+  .loading, .error-message {
+    padding: 2rem;
+    text-align: center;
+  }
+  
+  .error-message {
+    max-width: 600px;
+    margin: 0 auto;
+    background-color: #fff5f5;
+    border: 1px solid #ffcccb;
+    border-radius: 0.5rem;
+  }
+  
+  /* Media queries for responsiveness */
+  @media (max-width: 992px) {
+    .critique-content-container {
+      flex-direction: column;
+    }
+    
+    .community-sidebar-container {
+      width: 100%;
+      position: static;
+      margin-top: 1.5rem;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .critique-room-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+    
+    .critique-room-actions {
+      width: 100%;
+      justify-content: space-between;
+    }
+    
+    .posts-grid {
+      grid-template-columns: 1fr;
+    }
+  }

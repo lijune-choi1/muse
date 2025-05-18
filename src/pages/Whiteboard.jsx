@@ -1,10 +1,12 @@
+// src/pages/Whiteboard.jsx - Fixed version
 import React, { useRef, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import WhiteboardCanvas from '../components/whiteboard/WhiteboardCanvas';
 import CommentSystemExplainer from '../components/whiteboard/CommentSystemExplainer';
 import AnnotationLayer from '../components/whiteboard/AnnotationLayer';
-import critiqueService from './CritiqueService';
+import critiqueService from '../services/CritiqueService';
 import ToolBar from '../components/whiteboard/Toolbar';
+import { useAuth } from '../contexts/AuthContext';
 import '../components/whiteboard/Toolbar.css';
 import './Whiteboard.css';
 
@@ -12,6 +14,7 @@ const Whiteboard = () => {
   const { postId } = useParams();
   const navigate = useNavigate();
   const canvasRef = useRef();
+  const { currentUser } = useAuth(); // Get current user from auth context
   
   // State management
   const [post, setPost] = useState(null);
@@ -54,11 +57,11 @@ const Whiteboard = () => {
   const [showExplainer, setShowExplainer] = useState(true);
   const [explainerDismissed, setExplainerDismissed] = useState(false);
 
-  // Mock user profile - in real app, this would come from auth
+  // User profile - Use current user from auth context
   const userProfile = {
-    name: "Jane Doe",
-    avatar: "/path/to/avatar.jpg",
-    id: "user-1"
+    name: currentUser?.displayName || currentUser?.email || "Anonymous User",
+    avatar: currentUser?.photoURL || "/path/to/default-avatar.jpg",
+    id: currentUser?.uid || "anonymous-user"
   };
   
   const guestProfile = {
@@ -158,24 +161,32 @@ const Whiteboard = () => {
       
       try {
         setLoading(true);
+        console.log("Loading whiteboard data for post ID:", postId);
         
         // Load post details including image
-        const postData = await critiqueService.getPostById(parseInt(postId));
+        const postData = await critiqueService.getPostById(postId);
+        console.log("Post data loaded:", postData);
         setPost(postData);
         
-        // Set image URL (real or placeholder)
-        if (postData?.image) {
+        // Set image URL (use actual image URL from post data)
+        if (postData?.imageUrl) {
+          console.log("Using image URL from post:", postData.imageUrl);
+          setImageUrl(postData.imageUrl);
+        } else if (postData?.image) {
+          console.log("Using image from post:", postData.image);
           setImageUrl(postData.image);
         } else {
-          setImageUrl(`/api/placeholder/${600 + (postData?.id % 10 || 0)}/${400 + (postData?.id % 20 || 0)}`);
+          console.log("Using placeholder image");
+          setImageUrl(`/api/placeholder/${600 + (parseInt(postId) % 10 || 0)}/${400 + (parseInt(postId) % 20 || 0)}`);
         }
         
         // Load whiteboard data
-        const whiteboardData = await critiqueService.getWhiteboardData(parseInt(postId));
+        const whiteboardData = await critiqueService.getWhiteboardData(postId);
+        console.log("Whiteboard data loaded:", whiteboardData);
         
-        // Initialize comments with some defaults
+        // Initialize comments with saved data or defaults
         let processedComments = [];
-        if (whiteboardData.comments && whiteboardData.comments.length > 0) {
+        if (whiteboardData?.comments && whiteboardData.comments.length > 0) {
           processedComments = whiteboardData.comments.map(comment => ({
             ...comment,
             reactions: comment.reactions || { agreed: 0, disagreed: 0 },
@@ -183,9 +194,10 @@ const Whiteboard = () => {
             links: comment.links || []
           }));
           setComments(processedComments);
+          console.log("Loaded saved comments:", processedComments);
         } else {
-          // If no comments, add some sample comments
-          setComments([
+          // If no comments, add sample comments for testing (can be removed in production)
+          const sampleComments = [
             {
               id: 'sample-comment-1',
               position: { x: 100, y: 100 },
@@ -203,67 +215,27 @@ const Whiteboard = () => {
               reactions: { agreed: 0, disagreed: 0 },
               replies: [],
               links: []
-            },
-            // Add some overlapping comments to demonstrate clustering
-            {
-              id: 'sample-comment-3',
-              position: { x: 305, y: 195 },
-              type: 'details',
-              text: 'This overlaps with the conceptual comment',
-              reactions: { agreed: 0, disagreed: 0 },
-              replies: [],
-              links: []
-            },
-            {
-              id: 'sample-comment-4',
-              position: { x: 310, y: 205 },
-              type: 'technical',
-              text: 'Another overlapping comment',
-              reactions: { agreed: 0, disagreed: 0 },
-              replies: [],
-              links: []
-            },
-            {
-              id: 'sample-comment-5',
-              position: { x: 315, y: 198 },
-              type: 'details',
-              text: 'Third overlapping comment',
-              reactions: { agreed: 0, disagreed: 0 },
-              replies: [],
-              links: []
             }
-          ]);
+          ];
+          setComments(sampleComments);
+          console.log("Using sample comments since none were saved");
+          
+          // Save sample comments to database
+          await critiqueService.saveWhiteboardData(postId, { 
+            comments: sampleComments,
+            stamps: []
+          });
         }
         
         // Load any saved annotations
-        if (whiteboardData.annotations && whiteboardData.annotations.length > 0) {
+        if (whiteboardData?.annotations && whiteboardData.annotations.length > 0) {
           // Separate user and guest annotations
           const userAnno = whiteboardData.annotations.filter(a => a.userId === userProfile.id);
           const guestAnno = whiteboardData.annotations.filter(a => a.userId !== userProfile.id);
           
           setAnnotations(userAnno);
           setGuestAnnotations(guestAnno);
-        }
-        
-        // Add some simulated guest annotations if there aren't any
-        if (!whiteboardData.annotations || 
-            !whiteboardData.annotations.some(a => a.userId !== userProfile.id)) {
-          setGuestAnnotations([
-            {
-              points: [
-                { x: 150, y: 120 },
-                { x: 200, y: 140 },
-                { x: 250, y: 130 },
-                { x: 300, y: 150 }
-              ],
-              color: '#0074D9',
-              width: 3,
-              tool: 'pen',
-              timestamp: new Date().toISOString(),
-              userId: 'guest-1',
-              userName: 'Guest User'
-            }
-          ]);
+          console.log("Loaded saved annotations");
         }
       } catch (error) {
         console.error("Error loading post or whiteboard data:", error);
@@ -273,7 +245,7 @@ const Whiteboard = () => {
     };
     
     loadData();
-  }, [postId]);
+  }, [postId, userProfile.id]);
 
   // Update score when comments change
   useEffect(() => {
@@ -285,6 +257,29 @@ const Whiteboard = () => {
   useEffect(() => {
     setLocalPan(pan);
   }, [pan]);
+
+  // Save comments when they change
+  useEffect(() => {
+    // Don't save empty comments or during initial load
+    if (loading || comments.length === 0) return;
+    
+    const saveComments = async () => {
+      try {
+        console.log("Saving comments to whiteboard data:", comments);
+        await critiqueService.saveWhiteboardData(postId, { 
+          comments: comments,
+          stamps: [] // Add stamps if needed
+        });
+        console.log("Comments saved successfully");
+      } catch (error) {
+        console.error("Error saving whiteboard comments:", error);
+      }
+    };
+    
+    // Use a debounce to avoid too many saves
+    const timeoutId = setTimeout(saveComments, 1000);
+    return () => clearTimeout(timeoutId);
+  }, [comments, postId, loading]);
 
   if (loading) {
     return (
@@ -300,6 +295,20 @@ const Whiteboard = () => {
     if (mode === 'annotate') {
       // You might want to add logic here to save annotations to your backend
       console.log("Saving annotations:", annotations);
+      
+      // Save annotations to database
+      const saveAnnotations = async () => {
+        try {
+          await critiqueService.saveWhiteboardData(postId, { 
+            annotations: annotations
+          });
+          console.log("Annotations saved successfully");
+        } catch (error) {
+          console.error("Error saving whiteboard annotations:", error);
+        }
+      };
+      
+      saveAnnotations();
     }
     
     setMode(newMode);
@@ -317,8 +326,19 @@ const Whiteboard = () => {
   const handleAnnotationSave = (newAnnotations) => {
     setAnnotations(newAnnotations);
     
-    // In a real app, you would save these to your backend
-    // critiqueService.saveAnnotations(postId, newAnnotations);
+    // Save annotations to backend
+    const saveAnnotationsToBackend = async () => {
+      try {
+        await critiqueService.saveWhiteboardData(postId, { 
+          annotations: newAnnotations
+        });
+        console.log("Annotations saved successfully");
+      } catch (error) {
+        console.error("Error saving whiteboard annotations:", error);
+      }
+    };
+    
+    saveAnnotationsToBackend();
     
     if (collaborationEnabled) {
       simulateGuestActivity('Guest is viewing your annotations...');
@@ -329,8 +349,19 @@ const Whiteboard = () => {
   const handleAnnotationClear = () => {
     setAnnotations([]);
     
-    // In a real app, you would clear these from your backend
-    // critiqueService.clearAnnotations(postId);
+    // Clear annotations from backend
+    const clearAnnotationsFromBackend = async () => {
+      try {
+        await critiqueService.saveWhiteboardData(postId, { 
+          annotations: []
+        });
+        console.log("Annotations cleared successfully");
+      } catch (error) {
+        console.error("Error clearing whiteboard annotations:", error);
+      }
+    };
+    
+    clearAnnotationsFromBackend();
     
     if (collaborationEnabled) {
       simulateGuestActivity('Guest noticed you cleared the annotations');
@@ -367,109 +398,6 @@ const Whiteboard = () => {
         <div className="score-item">
           <span className="score-label">Details</span>
           <span className="score-value">{score.details}</span>
-        </div>
-      </div>
-
-      {/* Collaboration control panel */}
-      <div 
-        style={{
-          display: 'none',
-          position: 'absolute', 
-          top: '10px', 
-          right: '10px', 
-          backgroundColor: 'white',
-          padding: '10px',
-          borderRadius: '5px',
-          boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
-          zIndex: 100
-        }}
-      >
-        <h4>Controls</h4>
-        <div>
-          <label>
-            <input 
-              type="checkbox" 
-              checked={collaborationEnabled}
-              onChange={() => setCollaborationEnabled(!collaborationEnabled)}
-            />
-            Enable Collaboration
-          </label>
-        </div>
-        
-        {collaborationEnabled && (
-          <>
-            <div>
-              <label>
-                Collaboration Mode:
-                <select 
-                  value={collaborationMode}
-                  onChange={(e) => setCollaborationMode(e.target.value)}
-                >
-                  <option value="full">Full</option>
-                  <option value="limited">Limited</option>
-                  <option value="view-only">View Only</option>
-                </select>
-              </label>
-            </div>
-            <div>
-              <label>
-                <input 
-                  type="checkbox" 
-                  checked={useCollaborativeComments}
-                  onChange={() => setUseCollaborativeComments(!useCollaborativeComments)}
-                />
-                Collaborative Comments
-              </label>
-            </div>
-          </>
-        )}
-        
-        <hr style={{ margin: '10px 0', borderTop: '1px solid #ddd' }} />
-        
-        {/* Clustering controls */}
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <label>
-              <input 
-                type="checkbox" 
-                checked={clusteringEnabled}
-                onChange={() => setClusteringEnabled(!clusteringEnabled)}
-              />
-              Enable Comment Clustering
-            </label>
-            <button 
-              style={{
-                border: 'none',
-                background: 'none',
-                cursor: 'pointer',
-                color: '#0074D9',
-                fontSize: '14px'
-              }}
-              onClick={() => setShowClusterControls(!showClusterControls)}
-            >
-              {showClusterControls ? 'Hide Options' : 'Show Options'}
-            </button>
-          </div>
-          
-          {showClusterControls && (
-            <div style={{ marginTop: '8px', padding: '8px', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
-              <label>
-                Cluster Threshold: {clusterThreshold}px
-                <input 
-                  type="range"
-                  min="20"
-                  max="100"
-                  step="5"
-                  value={clusterThreshold}
-                  onChange={handleClusterThresholdChange}
-                  style={{ width: '100%', marginTop: '4px' }}
-                />
-              </label>
-              <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>
-                Smaller values create more clusters, larger values group more comments together.
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
@@ -524,90 +452,92 @@ const Whiteboard = () => {
             // Collaboration props
             collaborationEnabled={collaborationEnabled}
             collaborationMode={collaborationMode}
-            useCollaborativeCommentsuseCollaborativeComments={useCollaborativeComments}
-            />
-          )}
-          
-          {/* Annotation Layer - only shown in annotation mode */}
-          <AnnotationLayer 
-            enabled={mode === 'annotate'}
-            zoom={zoomLevel}
-            pan={localPan}
-            initialColor="#FF0000"
-            initialStrokeWidth={3}
+            useCollaborativeComments={useCollaborativeComments}
+            // User profile - pass current user from auth
             userProfile={userProfile}
-            guestStrokes={guestAnnotations}
-            onSave={handleAnnotationSave}
-            onClear={handleAnnotationClear}
           />
-        </div>
-  
-        {/* Guest activity indicator */}
-        {guestActivity && (
-          <div style={{
-            position: 'absolute',
-            top: 10,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            backgroundColor: 'rgba(52, 152, 219, 0.9)',
-            color: 'white',
-            padding: '6px 12px',
-            borderRadius: '4px',
-            fontSize: '14px',
-            zIndex: 1000,
-            boxShadow: '0 2px 10px rgba(0,0,0,0.2)'
-          }}>
-            {guestActivity}
-          </div>
         )}
-  
-        <ToolBar
-            currentMode={mode}
-            setMode={handleModeChange}
-            showLinks={showLinks}
-            setShowLinks={setShowLinks}
-            clusteringEnabled={clusteringEnabled}
-            setClusteringEnabled={setClusteringEnabled}
-          />
-  
-        {/* Zoom controls */}
-        <div className="zoom-controls">
-          <button className="zoom-button" onClick={() => setZoomLevel(prev => Math.min(prev * 1.2, 3))}>+</button>
-          <div className="zoom-value">{Math.round(zoomLevel * 100)}%</div>
-          <button className="zoom-button" onClick={() => setZoomLevel(prev => Math.max(prev / 1.2, 0.5))}>−</button>
-          <button className="zoom-button" onClick={() => setZoomLevel(1)}>↺</button>
-        </div>
-  
-        {/* Back button */}
-        <button 
-          className="fullscreen-button"
-          onClick={() => navigate(-1)}
-        >
-          ↩
-        </button>
-        
-        {/* Clustering information tooltip */}
-        {clusteringEnabled && mode !== 'annotate' && (
-          <div className="clustering-info-tooltip" style={{
-            position: 'absolute',
-            bottom: '70px',
-            left: '20px',
-            backgroundColor: 'rgba(52, 152, 219, 0.9)',
-            color: 'white',
-            padding: '8px 12px',
-            borderRadius: '4px',
-            fontSize: '13px',
-            maxWidth: '280px',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
-            animation: 'fadeIn 0.3s',
-            zIndex: 90
-          }}>
-            <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Comment Clustering Active</div>
-            <div>Multiple comments in the same area are grouped into clusters. Click a cluster to see all comments in a thread view.</div>
-          </div>
-        )}
+          
+        {/* Annotation Layer - only shown in annotation mode */}
+        <AnnotationLayer 
+          enabled={mode === 'annotate'}
+          zoom={zoomLevel}
+          pan={localPan}
+          initialColor="#FF0000"
+          initialStrokeWidth={3}
+          userProfile={userProfile}
+          guestStrokes={guestAnnotations}
+          onSave={handleAnnotationSave}
+          onClear={handleAnnotationClear}
+        />
       </div>
-    );
-  };
   
-  export default Whiteboard;
+      {/* Guest activity indicator */}
+      {guestActivity && (
+        <div style={{
+          position: 'absolute',
+          top: 10,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          backgroundColor: 'rgba(52, 152, 219, 0.9)',
+          color: 'white',
+          padding: '6px 12px',
+          borderRadius: '4px',
+          fontSize: '14px',
+          zIndex: 1000,
+          boxShadow: '0 2px 10px rgba(0,0,0,0.2)'
+        }}>
+          {guestActivity}
+        </div>
+      )}
+  
+      <ToolBar
+        currentMode={mode}
+        setMode={handleModeChange}
+        showLinks={showLinks}
+        setShowLinks={setShowLinks}
+        clusteringEnabled={clusteringEnabled}
+        setClusteringEnabled={setClusteringEnabled}
+      />
+  
+      {/* Zoom controls */}
+      <div className="zoom-controls">
+        <button className="zoom-button" onClick={() => setZoomLevel(prev => Math.min(prev * 1.2, 3))}>+</button>
+        <div className="zoom-value">{Math.round(zoomLevel * 100)}%</div>
+        <button className="zoom-button" onClick={() => setZoomLevel(prev => Math.max(prev / 1.2, 0.5))}>−</button>
+        <button className="zoom-button" onClick={() => setZoomLevel(1)}>↺</button>
+      </div>
+  
+      {/* Back button */}
+      <button 
+        className="fullscreen-button"
+        onClick={() => navigate(-1)}
+      >
+        ↩
+      </button>
+      
+      {/* Clustering information tooltip */}
+      {clusteringEnabled && mode !== 'annotate' && (
+        <div className="clustering-info-tooltip" style={{
+          position: 'absolute',
+          bottom: '70px',
+          left: '20px',
+          backgroundColor: 'rgba(52, 152, 219, 0.9)',
+          color: 'white',
+          padding: '8px 12px',
+          borderRadius: '4px',
+          fontSize: '13px',
+          maxWidth: '280px',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
+          animation: 'fadeIn 0.3s',
+          zIndex: 90
+        }}>
+          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Comment Clustering Active</div>
+          <div>Multiple comments in the same area are grouped into clusters. Click a cluster to see all comments in a thread view.</div>
+        </div>
+      )}
+    </div>
+  );
+};
+  
+export default Whiteboard;

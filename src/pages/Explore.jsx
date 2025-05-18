@@ -1,7 +1,8 @@
-// src/pages/Explore.jsx - without duplicate navigation elements
+// src/pages/Explore.jsx
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import './Explore.css'; // Reuse Home.css styles
+import './Explore.css';
+import critiqueService from '../services/CritiqueService'; // Direct import for CritiqueService
 
 // Default hardcoded communities to show if service fails
 const DEFAULT_COMMUNITIES = [
@@ -30,7 +31,7 @@ const DEFAULT_COMMUNITIES = [
 ];
 
 const Explore = () => {
-  const [communities, setCommunities] = useState(DEFAULT_COMMUNITIES);
+  const [communities, setCommunities] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -38,22 +39,29 @@ const Explore = () => {
       try {
         setLoading(true);
         
-        // Try to import CritiqueService dynamically
         try {
-          const critiqueServiceModule = await import('../pages/CritiqueService');
-          const critiqueService = critiqueServiceModule.default;
-          
+          // Get all communities from service
           const allCommunities = await critiqueService.getAllCommunities();
-          if (allCommunities && allCommunities.length > 0) {
-            setCommunities(allCommunities);
+          
+          // Filter to only show public communities
+          const publicCommunities = allCommunities.filter(
+            community => community.visibility === 'Public'
+          );
+          
+          if (publicCommunities && publicCommunities.length > 0) {
+            setCommunities(publicCommunities);
+          } else {
+            // Fallback to default communities if no public communities found
+            setCommunities(DEFAULT_COMMUNITIES.filter(c => c.visibility === 'Public'));
           }
-        } catch (importError) {
-          console.error("Error importing CritiqueService:", importError);
-          // Fallback to default communities
-          setCommunities(DEFAULT_COMMUNITIES);
+        } catch (serviceError) {
+          console.error("Error using CritiqueService:", serviceError);
+          // Fallback to default communities (only public ones)
+          setCommunities(DEFAULT_COMMUNITIES.filter(c => c.visibility === 'Public'));
         }
       } catch (error) {
         console.error('Error fetching communities:', error);
+        setCommunities(DEFAULT_COMMUNITIES.filter(c => c.visibility === 'Public'));
       } finally {
         setLoading(false);
       }
@@ -63,56 +71,79 @@ const Explore = () => {
   }, []);
 
   // Current user - in a real app would come from auth context
-  const currentUser = 'lijune.choi20';
+  const currentUser = {
+    name: window.currentUserName || localStorage.getItem('currentUserName') || 'Current User',
+    id: localStorage.getItem('userId') || null
+  };
 
   const handleJoinCommunity = async (communityId) => {
     try {
-      // Try to import CritiqueService dynamically
-      const critiqueServiceModule = await import('../pages/CritiqueService');
-      const critiqueService = critiqueServiceModule.default;
+      await critiqueService.followCommunity(currentUser.name, communityId);
+      alert(`Joined community successfully`);
       
-      await critiqueService.followCommunity(currentUser, communityId);
-      alert(`Joined community #${communityId}`);
+      // Refresh the communities to update the UI
+      const allCommunities = await critiqueService.getAllCommunities();
+      const publicCommunities = allCommunities.filter(
+        community => community.visibility === 'Public'
+      );
+      setCommunities(publicCommunities);
     } catch (error) {
       console.error('Error joining community:', error);
+      alert('Failed to join community. Please try again.');
     }
   };
 
   return (
-    // Removed the outer layout divs that included Navbar and Sidebar
-    <div className="main-content">
+    <div>
       <h1 className="explore-title">Explore Communities</h1>
       
       {loading ? (
-        <div>Loading communities...</div>
+        <div className="communities-loading">Loading communities...</div>
       ) : communities.length > 0 ? (
-        <div className="c-communities-grid">
-          {communities.map(community => (
-            <div key={community.id} className="c-community-card">
-              <div className="community-card-header">
-                <h2>{community.name}</h2>
-                <span className="community-members">{community.stats?.members || 0} members</span>
+        <>
+          <p>Discover and join public communities</p>
+          <div className="c-communities-grid">
+            {communities.map(community => (
+              <div key={community.id} className="c-community-card">
+                <div className="community-card-header">
+                  <h2>{community.name}</h2>
+                  <span className="community-members">
+                    {community.stats?.members || 0} members
+                  </span>
+                </div>
+                <p className="community-description">{community.description}</p>
+                <div className="community-card-footer">
+                  <Link 
+                    to={`/community/${community.name.replace('r/', '')}`} 
+                    className="view-community-btn"
+                  >
+                    View
+                  </Link>
+                  <button 
+                    className="join-community-btn"
+                    onClick={() => handleJoinCommunity(community.id)}
+                  >
+                    Join
+                  </button>
+                </div>
               </div>
-              <p className="community-description">{community.description}</p>
-              <div className="community-card-footer">
-                <Link to={`/community/${community.name.replace('r/', '')}`} className="view-community-btn">
-                  View
-                </Link>
-                <button 
-                  className="join-community-btn"
-                  onClick={() => handleJoinCommunity(community.id)}
-                >
-                  Join
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </>
       ) : (
         <div className="no-communities-message">
-          <p>No communities found. Be the first to create one!</p>
-          <Link to="/create-critique-room" className="create-community-btn">
+          <p>No public communities found. Be the first to create one!</p>
+          <Link to="/create-community" className="create-community-btn">
             Create Community
+          </Link>
+        </div>
+      )}
+      
+      {/* Add "Create Community" button at the bottom for easy access */}
+      {communities.length > 0 && (
+        <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+          <Link to="/create-community" className="create-community-btn">
+            Create a New Community
           </Link>
         </div>
       )}

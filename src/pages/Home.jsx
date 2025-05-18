@@ -1,52 +1,92 @@
 // src/pages/Home.jsx
 import React, { useState, useEffect } from 'react';
 import CritiqueCard from '../components/common/CritiqueCard';
-import critiqueService from './CritiqueService';
+import critiqueService from '../services/CritiqueService';
 import './Home.css';
 
 const Home = () => {
   const [critiquePosts, setCritiquePosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [dataStatus, setDataStatus] = useState(null);
+  const [seedingInProgress, setSeedingInProgress] = useState(false);
   
   useEffect(() => {
-    // Remove the localStorage clearing code - it's preventing persistence
-    
-    // Fetch all posts from both communities
-    const fetchPosts = async () => {
+    const initializeData = async () => {
       try {
         setLoading(true);
         
-        // Force initialization of default data if needed
-        await critiqueService._initializeDefaultData();
+        // Check if data exists
+        const status = await critiqueService.checkData();
+        setDataStatus(status);
         
-        const ijunePosts = await critiqueService.getAllPosts('r/ijuneneedshelp');
-        const graphicPosts = await critiqueService.getAllPosts('r/Graphic4ever');
+        // If no posts exist, offer to seed data
+        if (!status.postsExist && !status.error) {
+          console.log("No posts found. Consider seeding data.");
+        }
         
-        // Combine and sort by date (most recent first)
-        const allPosts = [...ijunePosts, ...graphicPosts].sort((a, b) => {
-          return new Date(b.date) - new Date(a.date);
-        });
-        
-        console.log('Posts loaded:', allPosts);
-        
-        setCritiquePosts(allPosts);
+        // Fetch posts regardless
+        const posts = await critiqueService.getAllPosts();
+        console.log('Posts loaded:', posts);
+        setCritiquePosts(posts || []);
       } catch (error) {
-        console.error('Error fetching posts:', error);
+        console.error('Error initializing data:', error);
       } finally {
         setLoading(false);
       }
     };
     
-    fetchPosts();
+    initializeData();
   }, []);
-
-  const handleEditClick = () => {
-    console.log('Edit clicked');
-    // Edit logic here
+  
+  const handleSeedData = async () => {
+    try {
+      setSeedingInProgress(true);
+      
+      const result = await critiqueService.seedDummyData();
+      console.log("Seeding result:", result);
+      
+      // Refresh posts
+      const posts = await critiqueService.getAllPosts();
+      setCritiquePosts(posts || []);
+      
+      // Update data status
+      const newStatus = await critiqueService.checkData();
+      setDataStatus(newStatus);
+    } catch (error) {
+      console.error("Error seeding data:", error);
+    } finally {
+      setSeedingInProgress(false);
+    }
   };
 
   return (
     <div className="content-wrapper">
+      {!loading && !dataStatus?.postsExist && (
+        <div className="seed-data-section" style={{ 
+          padding: '15px', 
+          margin: '15px', 
+          backgroundColor: '#f5f5f5', 
+          borderRadius: '5px', 
+          textAlign: 'center' 
+        }}>
+          <p>No posts found. Would you like to add some sample posts?</p>
+          <button 
+            onClick={handleSeedData} 
+            disabled={seedingInProgress}
+            style={{ 
+              padding: '8px 15px', 
+              backgroundColor: '#4285f4', 
+              color: 'white', 
+              border: 'none', 
+              borderRadius: '4px', 
+              cursor: 'pointer' 
+            }}
+          >
+            {seedingInProgress ? 'Adding Sample Data...' : 'Add Sample Data'}
+          </button>
+        </div>
+      )}
+      
       {loading ? (
         <div className="loading-spinner">Loading posts...</div>
       ) : critiquePosts.length > 0 ? (
@@ -55,15 +95,14 @@ const Home = () => {
             <CritiqueCard 
               key={post.id}
               id={post.id}
-              community={post.community} 
-              date={post.date}
+              community={post.communityName}
+              date={post.date || post.createdAt}
               title={post.title}
               description={post.description}
               editNumber={post.editNumber}
               status={post.status}
-              onEditClick={handleEditClick}
               image={post.imageUrl}
-              author={post.author}
+              author={post.authorName}
             />
           ))}
         </div>

@@ -594,6 +594,7 @@
   padding: 4px 10px;
   border: 1px solid #ddd;
   border-radius: 15px;
+  background: white;
   font-size: 12px;
   cursor: pointer;
   transition: all 0.2s;
@@ -763,6 +764,7 @@
   padding: 4px 10px;
   border: 1px solid #ddd;
   border-radius: 15px;
+  background: white;
   font-size: 12px;
   cursor: pointer;
   transition: all 0.2s;
