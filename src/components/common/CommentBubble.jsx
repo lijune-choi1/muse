@@ -1,4 +1,4 @@
-// CommentBubble.jsx with inline SVG icons
+// CommentBubble.jsx with proper user name display
 import React, { useState, useEffect, useRef } from 'react';
 import './CommentBubble.css';
 
@@ -270,8 +270,40 @@ const CommentBubble = ({
     return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
   };
 
-  // Determine user profile information
-  const userName = userProfile?.name || "Anonymous";
+  // Determine user profile information - use the comment author name when available,
+  // fallback to the current user's name, or use Anonymous as last resort
+  
+  // Get current user name from multiple sources
+  const getCurrentUser = () => {
+    // Check window global (set by our fixJaneDoe script)
+    if (window.currentUserName) {
+      return window.currentUserName;
+    }
+    
+    // Check localStorage (set by CommentService)
+    if (localStorage.getItem('currentUserName')) {
+      return localStorage.getItem('currentUserName');
+    }
+    
+    // Check Firebase auth if available 
+    if (window.firebase?.auth?.currentUser?.displayName) {
+      return window.firebase.auth.currentUser.displayName;
+    }
+    
+    // Return userProfile name or default
+    return userProfile?.name || "Current User";
+  };
+  
+  // Never use Jane Doe!
+  let commentAuthor = comment.author && comment.author !== "Jane Doe" 
+    ? comment.author 
+    : getCurrentUser();
+    
+  let userName = commentAuthor;
+  
+  const userAvatar = comment.avatar || userProfile?.avatar || "/assets/images/default-avatar.png";
+  
+  console.log("Current user name being displayed:", userName);
   
   // Check if comment has replies
   const hasReplies = localComment.replies && localComment.replies.length > 0;
@@ -302,7 +334,7 @@ const CommentBubble = ({
       <>
         <div className="user-section">
           <img 
-            src="/assets/images/default-avatar.png" // Placeholder asset image
+            src={userAvatar}
             alt={userName} 
             className="user-icon" 
           />
@@ -341,7 +373,7 @@ const CommentBubble = ({
         <div className="comment-bubble-header">
           <div className="user-section">
             <img 
-              src="/assets/images/default-avatar.png" // Placeholder asset image
+              src={userAvatar}
               alt={userName} 
               className="user-icon" 
             />
@@ -415,7 +447,7 @@ const CommentBubble = ({
         >
           <div className="user-section">
             <img 
-              src="/assets/images/default-avatar.png" // Placeholder asset image
+              src={userAvatar}
               alt={userName} 
               className="user-icon" 
             />
@@ -509,7 +541,7 @@ const CommentBubble = ({
             <div key={reply.id} className="reply-item">
               <div className="reply-header">
                 <img 
-                  src="/assets/images/default-avatar.png" // Placeholder asset image
+                  src={reply.avatar || userAvatar}
                   alt={reply.author} 
                   className="reply-avatar" 
                 />

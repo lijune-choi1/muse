@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom'; // Add useLocation
 import './Sidebar.css';
-import critiqueService from '../../pages/CritiqueService';
+import critiqueService from '../../services/CritiqueService';
 
 // Default hardcoded communities to show if CritiqueService fails
 const DEFAULT_COMMUNITIES = {

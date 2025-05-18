@@ -1,6 +1,6 @@
 // src/components/community/JoinButton.jsx
 import React, { useState, useEffect } from 'react';
-import critiqueService from '../../pages/CritiqueService';
+import critiqueService from '../../services/CritiqueService';
 
 const JoinButton = ({ communityId, communityName, onJoinStatusChange }) => {
   const [isFollowing, setIsFollowing] = useState(false);

@@ -4,7 +4,7 @@ import CommentTag from '../common/CommentTag';
 import CommentLinking from '../common/CommentLinking';
 import CommentCluster from './CommentCluster';
 import CommentThread from './CommentThread';
-import commentService from '../common/CommentService';
+import commentService from '../../services/CommentService';
 import CommentBubbleManager from './CommentBubbleManager';
 import { clusterComments, isSingletonCluster, createCommentToClusterMap } from './ClusteringUtils';
 

@@ -20,12 +20,12 @@ const Navbar = () => {
       <div className="navbar">
         <div className="navbar-brand">
           <Link to="/" className="navbar-title-link">
-            <h1 className="navbar-title">muse</h1>
+            <h1 className="navbar-title">+Critique.lite</h1>
           </Link>
-          <span className="navbar-subtitle">ver Beta1.1</span>
+          <span className="navbar-subtitle">Beta1.2</span>
         </div>
         <div className="navbar-actions">
-          <Button variant="primary" onClick={handleCreatePost}>Create Critique Post</Button>
+          <Button variant="primary" onClick={handleCreatePost}> Post</Button>
           <div className="navbar-icon">
             {/* Notification icon */}
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
