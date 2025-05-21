@@ -64,7 +64,7 @@ const CritiqueCard = (props) => {
         {isAuthor && (
           <div className="edit-post-btn-top">
             <Link to={`/edit-post/${id}`} className="edit-own-btn-top">
-              Edit Post
+              Edit 
             </Link>
           </div>
         )}
@@ -103,7 +103,7 @@ const CritiqueCard = (props) => {
             className="enter-whiteboard-btn"
             onClick={handleEnterWhiteboard}
           >
-            Enter Whiteboard
+            Enter 
           </button>
         </div>
       </div>

@@ -1,12 +1,12 @@
 /* src/components/layout/Sidebar.css */
 .sidebar {
   background-color:rgb(255, 255, 255);
-  border-right:1px solid #c7c7c7;
+  border-right:1px solid #f1f1f1;
     font-size:14px;
     width: 180px;
     position:fixed;
     padding: 1rem;
-    margin-top:48px;
+    padding-top:96px;
     height: 100vh; /* Full height */
   }
   
