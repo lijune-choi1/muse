@@ -1,12 +1,16 @@
 // src/components/common/CommentBubbleManager.jsx
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { getFirestore } from 'firebase/firestore';
 import CommentBubble from '../common/CommentBubble';
 
 /**
  * CommentBubbleManager handles displaying comment bubbles in different states
- * (hover, expanded, edit) and manages the interactions between them
+ * (hover, expanded, edit) and manages the interactions between them.
+ * It now ensures comments are only those saved in Firebase.
  */
 const CommentBubbleManager = ({
+  designId, // Add designId prop to fetch comments for specific design
   comments,
   selectedCommentId,
   expandedCommentId,
@@ -20,15 +24,53 @@ const CommentBubbleManager = ({
   zoom,
   localPan,
   userProfile,
-  guestProfile
+  guestProfile,
+  db // You can optionally pass the Firestore instance as a prop
 }) => {
   // State for managing comment display
   const [hoveredCommentBubbleId, setHoveredCommentBubbleId] = useState(null);
   const [commentDisplayModes, setCommentDisplayModes] = useState({});
+  const [firebaseComments, setFirebaseComments] = useState([]);
   const hoverTimerRef = useRef(null);
+
+  // Subscribe to comments from Firebase
+  useEffect(() => {
+    if (!designId) return;
+
+    // Get Firestore instance if not provided as prop
+    const firestore = db || getFirestore();
+    
+    // Create a query against the comments collection
+    const commentsRef = collection(firestore, 'comments');
+    const commentsQuery = query(commentsRef, where('designId', '==', designId));
+
+    // Set up real-time listener
+    const unsubscribe = onSnapshot(commentsQuery, (snapshot) => {
+      const commentsData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setFirebaseComments(commentsData);
+      console.log('Fetched Firebase comments:', commentsData);
+    }, (error) => {
+      console.error("Error fetching comments from Firebase:", error);
+    });
+
+    // Clean up listener on unmount
+    return () => unsubscribe();
+  }, [designId, db]);
+
+  // Use Firebase comments for all operations
+  const activeComments = firebaseComments.length > 0 ? firebaseComments : comments;
 
   // Handle comment tag hover
   const handleCommentTagEnter = (commentId) => {
+    // Verify this comment exists in Firebase
+    if (!activeComments.some(c => c.id === commentId)) {
+      console.warn(`Comment ${commentId} not found in Firebase. Ignoring hover.`);
+      return;
+    }
+    
     // Don't show hover bubble if comment is already expanded
     if (expandedCommentId === commentId) return;
     
@@ -87,6 +129,12 @@ const CommentBubbleManager = ({
   const handleCommentClick = (e, commentId) => {
     e.stopPropagation();
     
+    // Verify this comment exists
+    if (!activeComments.some(c => c.id === commentId)) {
+      console.warn(`Comment ${commentId} not found. Ignoring click.`);
+      return;
+    }
+    
     // Select the comment
     onCommentSelect(commentId);
     
@@ -106,6 +154,12 @@ const CommentBubbleManager = ({
   // Handle double click to edit comment
   const handleCommentDoubleClick = (e, commentId) => {
     e.stopPropagation();
+    
+    // Verify this comment exists
+    if (!activeComments.some(c => c.id === commentId)) {
+      console.warn(`Comment ${commentId} not found. Ignoring double-click.`);
+      return;
+    }
     
     // Select the comment
     onCommentSelect(commentId);
@@ -130,7 +184,8 @@ const CommentBubbleManager = ({
   const renderHoverBubbles = () => {
     if (!hoveredCommentBubbleId || hoveredCommentBubbleId === expandedCommentId) return null;
     
-    const comment = comments.find(c => c.id === hoveredCommentBubbleId);
+    // Use Firebase comments to ensure we only show stored comments
+    const comment = activeComments.find(c => c.id === hoveredCommentBubbleId);
     if (!comment) return null;
     
     // Position the bubble to the right of the comment
@@ -175,7 +230,8 @@ const CommentBubbleManager = ({
   const renderExpandedBubble = () => {
     if (!expandedCommentId) return null;
     
-    const comment = comments.find(c => c.id === expandedCommentId);
+    // Use Firebase comments to ensure we only show stored comments
+    const comment = activeComments.find(c => c.id === expandedCommentId);
     if (!comment) return null;
     
     // Position the bubble to the right of the comment
@@ -224,7 +280,8 @@ const CommentBubbleManager = ({
     handleCommentClick,
     handleCommentDoubleClick,
     renderHoverBubbles,
-    renderExpandedBubble
+    renderExpandedBubble,
+    firebaseComments // Expose the firebase comments to parent component
   };
 };
 

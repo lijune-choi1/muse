@@ -46,7 +46,11 @@ const CritiqueCard = (props) => {
   return (
     <div className="critique-card">
       <div className="card-image-container">
-        <img src={image} alt={title} className="card-image" />
+        {/* Make the image clickable to go to the whiteboard */}
+        <div className="image-link" onClick={handleEnterWhiteboard}>
+          <img src={image} alt={title} className="card-image" />
+        </div>
+        
         <div className="status-badge" style={{ backgroundColor: statusInfo.color }}>
           {statusInfo.label}
         </div>
@@ -81,15 +85,19 @@ const CritiqueCard = (props) => {
           )}
         </div>
         
+        {/* Link title to whiteboard instead of post page */}
         <h3 className="card-title">
-          <Link to={`/post/${id}`}>{title}</Link>
+          <a href="#" onClick={(e) => {
+            e.preventDefault();
+            navigate(`/whiteboard/${id}`);
+          }}>
+            {title}
+          </a>
         </h3>
         
         <p className="card-description">{description}</p>
         
         <div className="card-actions">
-        
-          
           {/* Always show Enter Whiteboard button */}
           <button 
             className="enter-whiteboard-btn"

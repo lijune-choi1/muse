@@ -3,10 +3,10 @@
   background-color:rgb(255, 255, 255);
   border-right:1px solid #c7c7c7;
     font-size:14px;
-    margin-top:48px;
     width: 180px;
     position:fixed;
     padding: 1rem;
+    margin-top:48px;
     height: 100vh; /* Full height */
   }
   

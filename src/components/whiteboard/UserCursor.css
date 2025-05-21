@@ -1,0 +1,130 @@
+/* src/components/whiteboard/UserCursor.css */
+.user-cursor {
+    position: absolute;
+    pointer-events: none;
+    z-index: 9000;
+    transition: transform 0.1s ease, opacity 0.2s ease;
+    transform-origin: top left;
+  }
+  
+  .cursor-pointer {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-left: 2px solid;
+    border-top: 2px solid;
+    transform: rotate(135deg) translate(-3px, -3px);
+    z-index: 1;
+  }
+  
+  .cursor-user-tag {
+    position: absolute;
+    left: 15px;
+    top: -5px;
+    display: flex;
+    align-items: center;
+    padding: 4px 6px 4px 4px;
+    border-radius: 4px;
+    color: white;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    animation: fadeIn 0.3s ease-out;
+  }
+  
+  .cursor-avatar {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    margin-right: 6px;
+    object-fit: cover;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+  }
+  
+  .cursor-initials {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    margin-right: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.3);
+    font-size: 10px;
+    font-weight: bold;
+  }
+  
+  .cursor-name {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  /* Typing indicator */
+  .typing-indicator {
+    position: absolute;
+    bottom: -15px;
+    left: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+  }
+  
+  .typing-indicator span {
+    display: inline-block;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    animation: typingAnimation 1s infinite ease-in-out;
+  }
+  
+  .typing-indicator span:nth-child(1) {
+    animation-delay: 0.1s;
+  }
+  
+  .typing-indicator span:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+  
+  .typing-indicator span:nth-child(3) {
+    animation-delay: 0.3s;
+  }
+  
+  @keyframes typingAnimation {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-3px);
+    }
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(5px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Add a pulse effect for when a user first joins */
+  .cursor-user-tag.new-user {
+    animation: pulseAnimation 2s;
+  }
+  
+  @keyframes pulseAnimation {
+    0% {
+      box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+    }
+    70% {
+      box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+    }
+  }

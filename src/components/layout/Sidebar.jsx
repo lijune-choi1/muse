@@ -1,87 +1,96 @@
 // src/components/layout/Sidebar.jsx
 import React, { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom'; // Add useLocation
+import { Link, useLocation } from 'react-router-dom';
 import './Sidebar.css';
 import critiqueService from '../../services/CritiqueService';
-
-// Default hardcoded communities to show if CritiqueService fails
-const DEFAULT_COMMUNITIES = {
-  followed: [
-    {
-      id: 1,
-      name: 'r/ijuneneedshelp',
-      description: 'Community board for Iijune to get feedback for design'
-    },
-    {
-      id: 2,
-      name: 'r/Graphic4ever',
-      description: 'A community for graphic designers to share and critique professional work'
-    }
-  ],
-  owned: []
-};
+import { useAuth } from '../../contexts/AuthContext';
 
 const Sidebar = () => {
-  const [followedCommunities, setFollowedCommunities] = useState(DEFAULT_COMMUNITIES.followed);
-  const [ownedCommunities, setOwnedCommunities] = useState(DEFAULT_COMMUNITIES.owned);
+  const [followedCommunities, setFollowedCommunities] = useState([]);
+  const [ownedCommunities, setOwnedCommunities] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const location = useLocation(); // Get current location to detect navigation changes
-
-  // Current user - in a real app would come from auth context
-  const currentUser = 'lijune.choi20';
+  const { currentUser } = useAuth(); // Get current user from auth context
 
   // Function to load communities - extracted to be called multiple times
   const loadCommunities = async () => {
+    // If no user is logged in, don't try to load communities
+    if (!currentUser) {
+      setFollowedCommunities([]);
+      setOwnedCommunities([]);
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
+      setError(null);
       console.log('Sidebar: Loading communities...');
       
+      // Fetch created/owned communities first
+      let userCreated = [];
       try {
-        // Force initialization of default data
-        if (typeof critiqueService._initializeDefaultData === 'function') {
-          await critiqueService._initializeDefaultData();
-        }
+        userCreated = await critiqueService.getUserCreatedCommunities(currentUser.displayName);
+        console.log('Sidebar: User created communities:', userCreated);
+        setOwnedCommunities(userCreated || []);
+      } catch (createdError) {
+        console.error('Sidebar: Error fetching created communities:', createdError);
+        setOwnedCommunities([]);
+      }
 
+      // Fetch followed communities
+      try {
+        const userFollowed = await critiqueService.getUserFollowedCommunities(currentUser.displayName);
+        console.log('Sidebar: User followed communities:', userFollowed);
+        
+        // Filter out communities that are already in the owned list to avoid duplicates
+        const ownedIds = (userCreated || []).map(community => community.id);
+        const filteredFollowed = (userFollowed || []).filter(
+          community => !ownedIds.includes(community.id)
+        );
+        
+        setFollowedCommunities(filteredFollowed);
+      } catch (followedError) {
+        console.error('Sidebar: Error fetching followed communities:', followedError);
+        setFollowedCommunities([]);
+      }
+      
+      // We should also fetch private communities the user has access to
+      try {
         // Get all communities
         const allCommunities = await critiqueService.getAllCommunities();
-        console.log('Sidebar: Fetched communities:', allCommunities);
         
-        // Check if we got communities
-        if (allCommunities && allCommunities.length > 0) {
-          // Fetch followed communities
-          const userFollowed = await critiqueService.getUserFollowedCommunities(currentUser);
-          console.log('Sidebar: User followed communities:', userFollowed);
-          if (userFollowed && userFollowed.length > 0) {
-            setFollowedCommunities(userFollowed);
-          } else {
-            setFollowedCommunities(DEFAULT_COMMUNITIES.followed);
-          }
-
-          // Fetch created/owned communities
-          const userCreated = await critiqueService.getUserCreatedCommunities(currentUser);
-          console.log('Sidebar: User created communities:', userCreated);
-          if (userCreated && userCreated.length > 0) {
-            setOwnedCommunities(userCreated);
-          } else {
-            setOwnedCommunities([]);
-          }
-        } else {
-          // No communities found, use defaults
-          console.log('Sidebar: No communities found, using defaults');
-          setFollowedCommunities(DEFAULT_COMMUNITIES.followed);
-          setOwnedCommunities(DEFAULT_COMMUNITIES.owned);
+        // Find private communities where the user is a member or moderator
+        const ownedAndFollowedIds = [
+          ...(ownedCommunities || []).map(c => c.id),
+          ...(followedCommunities || []).map(c => c.id)
+        ];
+        
+        const privateCommunities = allCommunities.filter(community => {
+          // Include if:
+          // 1. It's a private community
+          // 2. User is a member (in members array) or moderator (in moderators array)
+          // 3. It's not already in owned or followed communities
+          return (
+            community.visibility === 'Private' &&
+            !ownedAndFollowedIds.includes(community.id) &&
+            ((community.members && community.members.includes(currentUser.displayName)) ||
+             (community.moderators && community.moderators.includes(currentUser.displayName)))
+          );
+        });
+        
+        if (privateCommunities.length > 0) {
+          setFollowedCommunities(prev => [...prev, ...privateCommunities]);
         }
-      } catch (importError) {
-        console.error("Sidebar: Error fetching communities:", importError);
-        // Fallback to default communities
-        setFollowedCommunities(DEFAULT_COMMUNITIES.followed);
-        setOwnedCommunities(DEFAULT_COMMUNITIES.owned);
+      } catch (error) {
+        console.error('Sidebar: Error fetching private communities:', error);
       }
     } catch (error) {
       console.error("Sidebar: Error loading communities:", error);
-      // Final fallback to defaults
-      setFollowedCommunities(DEFAULT_COMMUNITIES.followed);
-      setOwnedCommunities(DEFAULT_COMMUNITIES.owned);
+      setError("Failed to load communities");
+      setFollowedCommunities([]);
+      setOwnedCommunities([]);
     } finally {
       setIsLoading(false);
     }
@@ -132,46 +141,69 @@ const Sidebar = () => {
         </div>
 
         {/* Owned Communities Section */}
-        {ownedCommunities.length > 0 && (
+        {isLoading ? (
+          <div className="sidebar-loading">Loading communities...</div>
+        ) : (
           <>
-            <h2 className="sidebar-heading">MY COMMUNITIES</h2>
-            <ul>
-              {ownedCommunities.map((community) => (
-                <li key={community.id || community.name} className="sidebar-item">
-                  <Link 
-                    to={`/community/${community.name?.replace('r/', '') || community.id}`} 
-                    className="sidebar-link"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    {community.name || `Community #${community.id}`}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
+            {ownedCommunities && ownedCommunities.length > 0 && (
+              <>
+                <h2 className="sidebar-heading">MY COMMUNITIES</h2>
+                <ul>
+                  {ownedCommunities.map((community) => (
+                    <li key={community.id} className="sidebar-item">
+                      <Link 
+                        to={`/community/${community.name?.replace('r/', '')}`} 
+                        className="sidebar-link"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        {community.name}
+                        {community.visibility === 'Private' && (
+                          <span className="community-privacy-badge" title="Private Community">🔒</span>
+                        )}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
 
-        {/* Followed Communities Section */}
-        {followedCommunities.length > 0 && (
-          <>
-            <h2 className="sidebar-heading">FOLLOWED COMMUNITIES</h2>
-            <ul>
-              {followedCommunities.map((community) => (
-                <li key={community.id || community.name} className="sidebar-item">
-                  <Link 
-                    to={`/community/${community.name?.replace('r/', '') || community.id}`} 
-                    className="sidebar-link"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    {community.name || `Community #${community.id}`}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            {/* Followed Communities Section */}
+            {followedCommunities && followedCommunities.length > 0 && (
+              <>
+                <h2 className="sidebar-heading">JOINED COMMUNITIES</h2>
+                <ul>
+                  {followedCommunities.map((community) => (
+                    <li key={community.id} className="sidebar-item">
+                      <Link 
+                        to={`/community/${community.name?.replace('r/', '')}`} 
+                        className="sidebar-link"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        {community.name}
+                        {community.visibility === 'Private' && (
+                          <span className="community-privacy-badge" title="Private Community">🔒</span>
+                        )}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+
+            {/* Show message if no communities */}
+            {(!followedCommunities || followedCommunities.length === 0) && 
+             (!ownedCommunities || ownedCommunities.length === 0) && (
+              <div className="sidebar-no-communities">
+                <p>No communities yet</p>
+                <Link to="/explore" className="sidebar-link">
+                  Explore communities
+                </Link>
+              </div>
+            )}
           </>
         )}
       </div>
@@ -188,21 +220,7 @@ const Sidebar = () => {
         </ul>
       </div>
 
-      {/* Add a hidden refresh button that's useful for debugging */}
-      <button 
-        onClick={loadCommunities} 
-        style={{ 
-          display: 'none',  // Hidden by default
-          marginTop: '20px', 
-          padding: '8px', 
-          background: '#f1f1f1', 
-          border: '1px solid #ddd', 
-          borderRadius: '4px', 
-          cursor: 'pointer' 
-        }}
-      >
-        Refresh Communities
-      </button>
+   
     </div>
   );
 };
