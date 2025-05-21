@@ -9,15 +9,14 @@ import Register from './pages/Register';
 import CreateCritiqueRoom from './pages/CreateCritiqueRoom';
 import CommunityPage from './pages/CommunityPage';
 import CreatePost from './pages/CreatePost';
-import PostDetail from './pages/PostDetail';
 import Profile from './pages/Profile';
 import Whiteboard from './pages/Whiteboard';
-import Explore from './pages/Explore'; // Import for Explore component
-import Leaderboard from './pages/Leaderboard'; // Import for Leaderboard component
-// Import the EditCommunity component
+import Explore from './pages/Explore'; 
+import Leaderboard from './pages/Leaderboard';
 import EditCommunity from './pages/EditCommunity';
-// Import the EditPost component
 import EditPost from './pages/EditPost';
+import About from './pages/About';
+import Settings from './pages/Settings';
 
 // Protected route component
 const ProtectedRoute = ({ children }) => {
@@ -48,14 +47,28 @@ function AppContent() {
         <Route path="/explore" element={<RouteWithLayout element={<Explore />} />} />
         <Route path="/featured" element={<RouteWithLayout element={<Leaderboard />} />} />
         <Route path="/leaderboard" element={<RouteWithLayout element={<Leaderboard />} />} />
+        {/* Public Routes that use the same layout */}
+        <Route path="/about" element={<About />} />
+                  
+                  {/* Protected Routes with layout */}
+                  <Route 
+                    path="/settings" 
+                    element={
+                      <ProtectedRoute>
+                        <Settings />
+                      </ProtectedRoute>
+                    } 
+                  />
         <Route path="/community/:name" element={<RouteWithLayout element={<CommunityPage />} />} />
-        <Route path="/post/:id" element={<RouteWithLayout element={<PostDetail />} />} />
+        
+        {/* Redirect /post/:id to /whiteboard/:postId */}
+        <Route path="/post/:id" element={<Navigate to={(params) => `/whiteboard/${params.id}`} />} />
         
         {/* Authentication routes without Layout */}
         <Route path="/login" element={<RouteWithLayout element={<Login />} showLayout={false} />} />
         <Route path="/register" element={<RouteWithLayout element={<Register />} showLayout={false} />} />
         
-        {/* Whiteboard route - without standard layout since it has its own UI */}
+        {/* Whiteboard route - direct access */}
         <Route path="/whiteboard/:postId" element={<Whiteboard />} />
         
         {/* Protected routes with Layout */}
@@ -98,22 +111,22 @@ function AppContent() {
           } 
         />
         
-        {/* Support both path patterns for creating posts */}
+        {/* Modified CreatePost route to handle redirection to whiteboard */}
         <Route 
           path="/create-post/:community" 
           element={
             <ProtectedRoute>
-              <RouteWithLayout element={<CreatePost />} />
+              <RouteWithLayout element={<CreatePost redirectToWhiteboard={true} />} />
             </ProtectedRoute>
           } 
         />
         
-        {/* Add support for the path used in Navbar */}
+        {/* Support for the path used in Navbar - also redirects to whiteboard */}
         <Route 
           path="/create-critique-post" 
           element={
             <ProtectedRoute>
-              <RouteWithLayout element={<CreatePost />} />
+              <RouteWithLayout element={<CreatePost redirectToWhiteboard={true} />} />
             </ProtectedRoute>
           } 
         />
