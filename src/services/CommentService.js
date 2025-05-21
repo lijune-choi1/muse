@@ -1,11 +1,26 @@
 // src/services/CommentService.js
-// Service for managing comment data including reactions and replies
-import { auth } from './firebase';
+// Service for managing comment data including reactions and replies in Firebase
+import { auth, db } from './firebase';
+import { 
+  collection, 
+  doc, 
+  getDoc, 
+  getDocs, 
+  setDoc, 
+  deleteDoc, 
+  query, 
+  where, 
+  addDoc, 
+  updateDoc, 
+  arrayUnion, 
+  arrayRemove, 
+  serverTimestamp 
+} from 'firebase/firestore';
 
 class CommentService {
     constructor() {
-      this.storageKey = 'comment_data';
-      this.initializeStorage();
+      this.commentsCollection = 'comments';
+      this.reactionsCollection = 'reactions';
       this.currentUser = null;
       
       // Set up auth state listener to keep track of current user
@@ -29,13 +44,6 @@ class CommentService {
         }
       });
     }
-  
-    // Initialize storage if it doesn't exist
-    initializeStorage() {
-      if (!localStorage.getItem(this.storageKey)) {
-        localStorage.setItem(this.storageKey, JSON.stringify({}));
-      }
-    }
     
     // Get the current user
     getCurrentUser() {
@@ -53,10 +61,22 @@ class CommentService {
       return this.currentUser;
     }
   
-    // Get all comments data
-    getAllComments() {
+    // Get all comments for a specific design
+    async getCommentsByDesignId(designId) {
       try {
-        return JSON.parse(localStorage.getItem(this.storageKey)) || {};
+        const commentsRef = collection(db, this.commentsCollection);
+        const q = query(commentsRef, where('designId', '==', designId));
+        const querySnapshot = await getDocs(q);
+        
+        const comments = {};
+        querySnapshot.forEach((doc) => {
+          comments[doc.id] = {
+            id: doc.id,
+            ...doc.data()
+          };
+        });
+        
+        return comments;
       } catch (error) {
         console.error('Error retrieving comments:', error);
         return {};
@@ -64,19 +84,32 @@ class CommentService {
     }
   
     // Get a specific comment by ID
-    getComment(commentId) {
-      const comments = this.getAllComments();
-      return comments[commentId] || null;
+    async getComment(commentId) {
+      try {
+        const commentRef = doc(db, this.commentsCollection, commentId);
+        const commentDoc = await getDoc(commentRef);
+        
+        if (commentDoc.exists()) {
+          return {
+            id: commentDoc.id,
+            ...commentDoc.data()
+          };
+        }
+        
+        return null;
+      } catch (error) {
+        console.error('Error retrieving comment:', error);
+        return null;
+      }
     }
   
     // Save or update a comment
-    saveComment(comment) {
+    async saveComment(comment) {
       try {
-        const comments = this.getAllComments();
-        
         // Get current user
         const user = this.getCurrentUser();
         const userName = user?.name || 'Anonymous';
+        const userId = user?.uid || 'anonymous';
         
         // Override any hardcoded author name with the current user
         if (!comment.author || comment.author === 'Jane Doe') {
@@ -86,13 +119,28 @@ class CommentService {
         // Ensure comment has proper structure
         const updatedComment = {
           ...comment,
-          author: comment.author || userName,  // Use current user name if not provided
+          author: comment.author || userName,
+          authorId: comment.authorId || userId,
           reactions: comment.reactions || { agreed: 0, disagreed: 0 },
-          replies: comment.replies || []
+          replies: comment.replies || [],
+          updatedAt: serverTimestamp()
         };
         
-        comments[comment.id] = updatedComment;
-        localStorage.setItem(this.storageKey, JSON.stringify(comments));
+        // If this is a new comment, add createdAt
+        if (!comment.createdAt) {
+          updatedComment.createdAt = serverTimestamp();
+        }
+        
+        // If comment has an ID, update it; otherwise, create new
+        if (comment.id) {
+          const commentRef = doc(db, this.commentsCollection, comment.id);
+          await setDoc(commentRef, updatedComment, { merge: true });
+        } else {
+          // Generate a new ID
+          const commentsRef = collection(db, this.commentsCollection);
+          const newCommentRef = await addDoc(commentsRef, updatedComment);
+          updatedComment.id = newCommentRef.id;
+        }
         
         return updatedComment;
       } catch (error) {
@@ -102,17 +150,11 @@ class CommentService {
     }
   
     // Delete a comment
-    deleteComment(commentId) {
+    async deleteComment(commentId) {
       try {
-        const comments = this.getAllComments();
-        
-        if (comments[commentId]) {
-          delete comments[commentId];
-          localStorage.setItem(this.storageKey, JSON.stringify(comments));
-          return true;
-        }
-        
-        return false;
+        const commentRef = doc(db, this.commentsCollection, commentId);
+        await deleteDoc(commentRef);
+        return true;
       } catch (error) {
         console.error('Error deleting comment:', error);
         return false;
@@ -120,131 +162,176 @@ class CommentService {
     }
   
     // Update comment content
-    updateCommentContent(commentId, newContent) {
-      const comment = this.getComment(commentId);
-      
-      if (!comment) return null;
-      
-      comment.text = newContent;
-      return this.saveComment(comment);
+    async updateCommentContent(commentId, newContent) {
+      try {
+        const commentRef = doc(db, this.commentsCollection, commentId);
+        await updateDoc(commentRef, {
+          text: newContent,
+          updatedAt: serverTimestamp()
+        });
+        
+        return await this.getComment(commentId);
+      } catch (error) {
+        console.error('Error updating comment content:', error);
+        return null;
+      }
     }
   
     // Update comment type
-    updateCommentType(commentId, newType) {
-      const comment = this.getComment(commentId);
-      
-      if (!comment) return null;
-      
-      comment.type = newType;
-      return this.saveComment(comment);
+    async updateCommentType(commentId, newType) {
+      try {
+        const commentRef = doc(db, this.commentsCollection, commentId);
+        await updateDoc(commentRef, {
+          type: newType,
+          updatedAt: serverTimestamp()
+        });
+        
+        return await this.getComment(commentId);
+      } catch (error) {
+        console.error('Error updating comment type:', error);
+        return null;
+      }
     }
   
     // Get user reactions for a comment
-    getUserReactions(userId, commentId) {
+    async getUserReactions(userId, commentId) {
       // If userId is not provided, use current user
       if (!userId) {
         const user = this.getCurrentUser();
         userId = user?.uid || 'anonymous';
       }
       
-      const userReactionsKey = `user_reactions_${userId}`;
-      let userReactions;
-      
       try {
-        userReactions = JSON.parse(localStorage.getItem(userReactionsKey)) || {};
+        const reactionRef = doc(db, this.reactionsCollection, `${userId}_${commentId}`);
+        const reactionDoc = await getDoc(reactionRef);
+        
+        if (reactionDoc.exists()) {
+          return reactionDoc.data();
+        }
+        
+        return { agreed: false, disagreed: false };
       } catch (error) {
         console.error('Error retrieving user reactions:', error);
-        userReactions = {};
+        return { agreed: false, disagreed: false };
       }
-      
-      return userReactions[commentId] || { agreed: false, disagreed: false };
     }
   
     // Update comment reactions
-    updateCommentReactions(commentId, reactions, userReacted, userId) {
+    async updateCommentReactions(commentId, reactions, userReacted, userId) {
       // If userId is not provided, use current user
       if (!userId) {
         const user = this.getCurrentUser();
         userId = user?.uid || 'anonymous';
       }
       
-      // Update comment reactions
-      const comment = this.getComment(commentId);
-      
-      if (!comment) return null;
-      
-      comment.reactions = reactions;
-      const updatedComment = this.saveComment(comment);
-      
-      // Update user reactions
-      this.saveUserReaction(userId, commentId, userReacted);
-      
-      return updatedComment;
+      try {
+        // Update comment reactions
+        const commentRef = doc(db, this.commentsCollection, commentId);
+        await updateDoc(commentRef, {
+          reactions: reactions,
+          updatedAt: serverTimestamp()
+        });
+        
+        // Update user reactions
+        await this.saveUserReaction(userId, commentId, userReacted);
+        
+        return await this.getComment(commentId);
+      } catch (error) {
+        console.error('Error updating comment reactions:', error);
+        return null;
+      }
     }
   
     // Save user reaction
-    saveUserReaction(userId, commentId, reaction) {
+    async saveUserReaction(userId, commentId, reaction) {
       // If userId is not provided, use current user
       if (!userId) {
         const user = this.getCurrentUser();
         userId = user?.uid || 'anonymous';
       }
       
-      const userReactionsKey = `user_reactions_${userId}`;
-      let userReactions;
-      
       try {
-        userReactions = JSON.parse(localStorage.getItem(userReactionsKey)) || {};
+        const reactionRef = doc(db, this.reactionsCollection, `${userId}_${commentId}`);
+        await setDoc(reactionRef, {
+          ...reaction,
+          userId,
+          commentId,
+          updatedAt: serverTimestamp()
+        });
+        
+        return true;
       } catch (error) {
-        console.error('Error retrieving user reactions:', error);
-        userReactions = {};
+        console.error('Error saving user reaction:', error);
+        return false;
       }
-      
-      userReactions[commentId] = reaction;
-      localStorage.setItem(userReactionsKey, JSON.stringify(userReactions));
     }
   
     // Add a reply to a comment
-    addReply(commentId, reply) {
-      const comment = this.getComment(commentId);
-      
-      if (!comment) return null;
-      
-      if (!comment.replies) {
-        comment.replies = [];
+    async addReply(commentId, reply) {
+      try {
+        // Get current user for the reply author if not provided
+        if (!reply.author || reply.author === 'Jane Doe') {
+          const user = this.getCurrentUser();
+          reply.author = user?.name || 'Anonymous';
+          reply.authorId = user?.uid || 'anonymous';
+        }
+        
+        // Add timestamps
+        const replyWithTimestamp = {
+          ...reply,
+          createdAt: serverTimestamp()
+        };
+        
+        // Update the comment with the new reply
+        const commentRef = doc(db, this.commentsCollection, commentId);
+        await updateDoc(commentRef, {
+          replies: arrayUnion(replyWithTimestamp),
+          updatedAt: serverTimestamp()
+        });
+        
+        return await this.getComment(commentId);
+      } catch (error) {
+        console.error('Error adding reply:', error);
+        return null;
       }
-      
-      // Get current user for the reply author if not provided
-      if (!reply.author || reply.author === 'Jane Doe') {
-        const user = this.getCurrentUser();
-        reply.author = user?.name || 'Anonymous';
-      }
-      
-      comment.replies.push(reply);
-      return this.saveComment(comment);
     }
   
     // Get all replies for a comment
-    getReplies(commentId) {
-      const comment = this.getComment(commentId);
-      
-      if (!comment) return [];
-      
-      return comment.replies || [];
+    async getReplies(commentId) {
+      try {
+        const comment = await this.getComment(commentId);
+        
+        if (!comment) return [];
+        
+        return comment.replies || [];
+      } catch (error) {
+        console.error('Error getting replies:', error);
+        return [];
+      }
     }
   
     // Delete a reply from a comment
-    deleteReply(commentId, replyId) {
-      const comment = this.getComment(commentId);
-      
-      if (!comment || !comment.replies) return null;
-      
-      const replyIndex = comment.replies.findIndex(reply => reply.id === replyId);
-      
-      if (replyIndex === -1) return comment;
-      
-      comment.replies.splice(replyIndex, 1);
-      return this.saveComment(comment);
+    async deleteReply(commentId, replyId) {
+      try {
+        const comment = await this.getComment(commentId);
+        
+        if (!comment || !comment.replies) return null;
+        
+        const replyToRemove = comment.replies.find(reply => reply.id === replyId);
+        
+        if (!replyToRemove) return comment;
+        
+        const commentRef = doc(db, this.commentsCollection, commentId);
+        await updateDoc(commentRef, {
+          replies: arrayRemove(replyToRemove),
+          updatedAt: serverTimestamp()
+        });
+        
+        return await this.getComment(commentId);
+      } catch (error) {
+        console.error('Error deleting reply:', error);
+        return null;
+      }
     }
   }
   

@@ -1,12 +1,13 @@
 // src/pages/EditPost.jsx
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import critiqueService from '../services/CritiqueService';
 import './CreateCritiquePost.css'; // Reuse existing styles
 
 const EditPost = () => {
   const { postId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const fileInputRef = useRef(null);
   
   // Current user info from localStorage/window
@@ -93,8 +94,8 @@ const EditPost = () => {
       // Update the post
       await critiqueService.updatePost(updatedPost);
       
-      // Navigate back to post details
-      navigate(`/post/${postId}`);
+      // Navigate directly to the whiteboard instead of post details
+      navigate(`/whiteboard/${postId}`);
     } catch (error) {
       console.error('Error updating post:', error);
       setError('Failed to update post. Please try again.');
@@ -117,7 +118,8 @@ const EditPost = () => {
   };
   
   const handleCancel = () => {
-    navigate(`/post/${postId}`);
+    // Go back to the previous page instead of a hardcoded route
+    navigate(-1);
   };
   
   if (isLoading) {
@@ -131,9 +133,9 @@ const EditPost = () => {
         <p>{error}</p>
         <button 
           className="back-button"
-          onClick={() => navigate(`/post/${postId}`)}
+          onClick={() => navigate(-1)}
         >
-          Back to Post
+          Back
         </button>
       </div>
     );

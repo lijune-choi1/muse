@@ -1,10 +1,13 @@
-// src/pages/Whiteboard.jsx - Fixed version
+// src/pages/Whiteboard.jsx - With Cursor Tracking
 import React, { useRef, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import WhiteboardCanvas from '../components/whiteboard/WhiteboardCanvas';
+import CommentTracker from '../components/whiteboard/CommentTracker';
 import CommentSystemExplainer from '../components/whiteboard/CommentSystemExplainer';
 import AnnotationLayer from '../components/whiteboard/AnnotationLayer';
+import CursorManager from '../components/whiteboard/CursorManager';
 import critiqueService from '../services/CritiqueService';
+import commentService from '../services/CommentService';
 import ToolBar from '../components/whiteboard/Toolbar';
 import { useAuth } from '../contexts/AuthContext';
 import '../components/whiteboard/Toolbar.css';
@@ -14,7 +17,7 @@ const Whiteboard = () => {
   const { postId } = useParams();
   const navigate = useNavigate();
   const canvasRef = useRef();
-  const { currentUser } = useAuth(); // Get current user from auth context
+  const { currentUser } = useAuth();
   
   // State management
   const [post, setPost] = useState(null);
@@ -29,12 +32,6 @@ const Whiteboard = () => {
   const [annotations, setAnnotations] = useState([]);
   const [guestAnnotations, setGuestAnnotations] = useState([]);
   
-  // Collaboration testing states
-  const [collaborationEnabled, setCollaborationEnabled] = useState(false);
-  const [collaborationMode, setCollaborationMode] = useState('full');
-  const [useCollaborativeComments, setUseCollaborativeComments] = useState(false);
-  const [guestActivity, setGuestActivity] = useState(null);
-  
   // Comment state
   const [comments, setComments] = useState([]);
   const [selectedCommentId, setSelectedCommentId] = useState(null);
@@ -46,36 +43,47 @@ const Whiteboard = () => {
   // Display states
   const [showComments, setShowComments] = useState(true);
   const [showAnnotations, setShowAnnotations] = useState(false);
-  const [showLinks, setShowLinks] = useState(true); // Link visibility toggle
+  const [showLinks, setShowLinks] = useState(true);
+  
+  // Cursor tracking
+  const [cursorTrackingEnabled, setCursorTrackingEnabled] = useState(true);
+  
+  // Comment Tracker state
+  const [trackerCollapsed, setTrackerCollapsed] = useState(false);
   
   // Clustering states
   const [clusteringEnabled, setClusteringEnabled] = useState(true);
   const [clusterThreshold, setClusterThreshold] = useState(40);
-  const [showClusterControls, setShowClusterControls] = useState(false);
   
   // Explainer state
   const [showExplainer, setShowExplainer] = useState(true);
   const [explainerDismissed, setExplainerDismissed] = useState(false);
-
-  // User profile - Use current user from auth context
+  
+  // User information
   const userProfile = {
     name: currentUser?.displayName || currentUser?.email || "Anonymous User",
     avatar: currentUser?.photoURL || "/path/to/default-avatar.jpg",
     id: currentUser?.uid || "anonymous-user"
   };
   
-  const guestProfile = {
-    name: "Guest User",
-    avatar: "/path/to/guest-avatar.jpg",
-    id: "guest-1"
-  };
-
-  // Check local storage to see if the user has already seen the explainer
+  // Check local storage for user preferences
   useEffect(() => {
     const hasSeenExplainer = localStorage.getItem('hasSeenCommentExplainer');
     if (hasSeenExplainer) {
       setShowExplainer(false);
       setExplainerDismissed(true);
+    }
+    
+    // Check if tracker collapse state is stored
+    const trackerState = localStorage.getItem('commentTrackerCollapsed');
+    if (trackerState) {
+      setTrackerCollapsed(trackerState === 'true');
+    }
+    
+    // Check cursor tracking preference
+    const cursorTracking = localStorage.getItem('cursorTrackingEnabled');
+    if (cursorTracking) {
+      setCursorTrackingEnabled(cursorTracking === 'true');
     }
   }, []);
 
@@ -98,9 +106,20 @@ const Whiteboard = () => {
   const handleExplainerDismiss = () => {
     setShowExplainer(false);
     setExplainerDismissed(true);
-    
-    // Store in local storage so it doesn't show again
     localStorage.setItem('hasSeenCommentExplainer', 'true');
+  };
+
+  // Handle tracker collapse toggle
+  const handleTrackerToggle = (collapsed) => {
+    setTrackerCollapsed(collapsed);
+    localStorage.setItem('commentTrackerCollapsed', collapsed);
+  };
+  
+  // Toggle cursor tracking
+  const toggleCursorTracking = () => {
+    const newState = !cursorTrackingEnabled;
+    setCursorTrackingEnabled(newState);
+    localStorage.setItem('cursorTrackingEnabled', newState);
   };
 
   // Calculate points based on comment links
@@ -121,7 +140,7 @@ const Whiteboard = () => {
       if (comment.links && comment.links.length > 0) {
         const linkedComments = comment.links.map(
           linkId => comments.find(c => c.id === linkId)
-        ).filter(Boolean); // Remove any undefined links
+        ).filter(Boolean);
 
         const matchingColorLinks = linkedComments.filter(
           linkedComment => linkedComment.type?.toLowerCase() === commentType
@@ -180,52 +199,21 @@ const Whiteboard = () => {
           setImageUrl(`/api/placeholder/${600 + (parseInt(postId) % 10 || 0)}/${400 + (parseInt(postId) % 20 || 0)}`);
         }
         
-        // Load whiteboard data
+        // Load comments from Firebase
+        const firebaseComments = await commentService.getCommentsByDesignId(postId);
+        if (firebaseComments && Object.keys(firebaseComments).length > 0) {
+          // Convert from object to array
+          const commentsArray = Object.values(firebaseComments);
+          setComments(commentsArray);
+          console.log("Loaded comments from Firebase:", commentsArray);
+        } else {
+          console.log("No comments found in Firebase for this design");
+          setComments([]);
+        }
+        
+        // Load whiteboard data for annotations
         const whiteboardData = await critiqueService.getWhiteboardData(postId);
         console.log("Whiteboard data loaded:", whiteboardData);
-        
-        // Initialize comments with saved data or defaults
-        let processedComments = [];
-        if (whiteboardData?.comments && whiteboardData.comments.length > 0) {
-          processedComments = whiteboardData.comments.map(comment => ({
-            ...comment,
-            reactions: comment.reactions || { agreed: 0, disagreed: 0 },
-            replies: comment.replies || [],
-            links: comment.links || []
-          }));
-          setComments(processedComments);
-          console.log("Loaded saved comments:", processedComments);
-        } else {
-          // If no comments, add sample comments for testing (can be removed in production)
-          const sampleComments = [
-            {
-              id: 'sample-comment-1',
-              position: { x: 100, y: 100 },
-              type: 'technical',
-              text: 'Sample technical comment',
-              reactions: { agreed: 0, disagreed: 0 },
-              replies: [],
-              links: []
-            },
-            {
-              id: 'sample-comment-2',
-              position: { x: 300, y: 200 },
-              type: 'conceptual',
-              text: 'Sample conceptual comment',
-              reactions: { agreed: 0, disagreed: 0 },
-              replies: [],
-              links: []
-            }
-          ];
-          setComments(sampleComments);
-          console.log("Using sample comments since none were saved");
-          
-          // Save sample comments to database
-          await critiqueService.saveWhiteboardData(postId, { 
-            comments: sampleComments,
-            stamps: []
-          });
-        }
         
         // Load any saved annotations
         if (whiteboardData?.annotations && whiteboardData.annotations.length > 0) {
@@ -257,29 +245,6 @@ const Whiteboard = () => {
   useEffect(() => {
     setLocalPan(pan);
   }, [pan]);
-
-  // Save comments when they change
-  useEffect(() => {
-    // Don't save empty comments or during initial load
-    if (loading || comments.length === 0) return;
-    
-    const saveComments = async () => {
-      try {
-        console.log("Saving comments to whiteboard data:", comments);
-        await critiqueService.saveWhiteboardData(postId, { 
-          comments: comments,
-          stamps: [] // Add stamps if needed
-        });
-        console.log("Comments saved successfully");
-      } catch (error) {
-        console.error("Error saving whiteboard comments:", error);
-      }
-    };
-    
-    // Use a debounce to avoid too many saves
-    const timeoutId = setTimeout(saveComments, 1000);
-    return () => clearTimeout(timeoutId);
-  }, [comments, postId, loading]);
 
   if (loading) {
     return (
@@ -314,14 +279,6 @@ const Whiteboard = () => {
     setMode(newMode);
   };
 
-  // Simulate guest activities
-  const simulateGuestActivity = (activity) => {
-    if (!collaborationEnabled) return;
-    
-    setGuestActivity(activity);
-    setTimeout(() => setGuestActivity(null), 3000);
-  };
-
   // Handle annotation save
   const handleAnnotationSave = (newAnnotations) => {
     setAnnotations(newAnnotations);
@@ -339,10 +296,6 @@ const Whiteboard = () => {
     };
     
     saveAnnotationsToBackend();
-    
-    if (collaborationEnabled) {
-      simulateGuestActivity('Guest is viewing your annotations...');
-    }
   };
 
   // Handle annotation clear
@@ -362,16 +315,33 @@ const Whiteboard = () => {
     };
     
     clearAnnotationsFromBackend();
-    
-    if (collaborationEnabled) {
-      simulateGuestActivity('Guest noticed you cleared the annotations');
-    }
   };
 
-  // Handle cluster threshold change
-  const handleClusterThresholdChange = (e) => {
-    const value = parseInt(e.target.value);
-    setClusterThreshold(value);
+  // Handle comment selection from the tracker
+  const handleTrackerCommentSelect = (commentId) => {
+    setSelectedCommentId(commentId);
+    setExpandedCommentId(commentId);
+    
+    // If the comment exists, scroll to its position
+    const selectedComment = comments.find(comment => comment.id === commentId);
+    if (selectedComment && selectedComment.position) {
+      // Calculate the center position for the comment
+      const commentX = selectedComment.position.x;
+      const commentY = selectedComment.position.y;
+      
+      // Calculate the new pan to center the comment
+      const containerWidth = canvasRef.current?.clientWidth || 0;
+      const containerHeight = canvasRef.current?.clientHeight || 0;
+      
+      const newPan = {
+        x: -(commentX * zoomLevel) + (containerWidth / 2),
+        y: -(commentY * zoomLevel) + (containerHeight / 2)
+      };
+      
+      // Update pan position to center on the comment
+      setPan(newPan);
+      setLocalPan(newPan);
+    }
   };
 
   return (
@@ -381,26 +351,6 @@ const Whiteboard = () => {
         <CommentSystemExplainer onDismiss={handleExplainerDismiss} />
       )}
       
-      {/* Top score bar */}
-      <div className="scorebar-container" style={{ opacity: showComments ? 1 : 0.2 }}>
-        <div className="score-item total-points">
-          <span className="score-label">Total Points</span>
-          <span className="score-value">{score.total}</span>
-        </div>
-        <div className="score-item">
-          <span className="score-label">Technical</span>
-          <span className="score-value">{score.technical}</span>
-        </div>
-        <div className="score-item">
-          <span className="score-label">Conceptual</span>
-          <span className="score-value">{score.conceptual}</span>
-        </div>
-        <div className="score-item">
-          <span className="score-label">Details</span>
-          <span className="score-value">{score.details}</span>
-        </div>
-      </div>
-
       {/* Main canvas area */}
       <div className="canvas-wrapper" ref={canvasRef}>
         {/* Background Image */}
@@ -449,15 +399,13 @@ const Whiteboard = () => {
             // Clustering props
             clusteringEnabled={clusteringEnabled}
             clusterThreshold={clusterThreshold}
-            // Collaboration props
-            collaborationEnabled={collaborationEnabled}
-            collaborationMode={collaborationMode}
-            useCollaborativeComments={useCollaborativeComments}
+            // Pass designId to the whiteboard canvas for Firebase queries
+            designId={postId}
             // User profile - pass current user from auth
             userProfile={userProfile}
           />
         )}
-          
+        
         {/* Annotation Layer - only shown in annotation mode */}
         <AnnotationLayer 
           enabled={mode === 'annotate'}
@@ -470,26 +418,26 @@ const Whiteboard = () => {
           onSave={handleAnnotationSave}
           onClear={handleAnnotationClear}
         />
+        
+        {/* Cursor Manager - shows other users' cursors */}
+        {cursorTrackingEnabled && (
+          <CursorManager
+            designId={postId}
+            currentUser={currentUser}
+            canvasRef={canvasRef}
+            enabled={true}
+          />
+        )}
       </div>
   
-      {/* Guest activity indicator */}
-      {guestActivity && (
-        <div style={{
-          position: 'absolute',
-          top: 10,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          backgroundColor: 'rgba(52, 152, 219, 0.9)',
-          color: 'white',
-          padding: '6px 12px',
-          borderRadius: '4px',
-          fontSize: '14px',
-          zIndex: 1000,
-          boxShadow: '0 2px 10px rgba(0,0,0,0.2)'
-        }}>
-          {guestActivity}
-        </div>
-      )}
+      {/* Comment Tracker sidebar */}
+      <CommentTracker
+        comments={comments}
+        onCommentSelect={handleTrackerCommentSelect}
+        selectedCommentId={selectedCommentId}
+        collapsed={trackerCollapsed}
+        onToggleCollapse={handleTrackerToggle}
+      />
   
       <ToolBar
         currentMode={mode}
@@ -515,6 +463,26 @@ const Whiteboard = () => {
       >
         ↩
       </button>
+      
+      {/* Cursor tracking toggle */}
+      <button 
+        className="cursor-tracking-toggle"
+        onClick={toggleCursorTracking}
+        title={cursorTrackingEnabled ? "Disable cursor tracking" : "Enable cursor tracking"}
+      >
+        {cursorTrackingEnabled ? "👁️" : "👁️‍🗨️"}
+      </button>
+      
+      {/* Collaboration indicator showing active users */}
+      {cursorTrackingEnabled && (
+        <div className="active-users-indicator">
+          <div className="active-users-count">
+            <span className="user-dot" style={{ backgroundColor: '#4285F4' }}></span>
+            {/* This would show the actual count from CursorManager */}
+            <span>2 users online</span>
+          </div>
+        </div>
+      )}
       
       {/* Clustering information tooltip */}
       {clusteringEnabled && mode !== 'annotate' && (

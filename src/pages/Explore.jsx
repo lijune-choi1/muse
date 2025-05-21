@@ -2,91 +2,83 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './Explore.css';
-import critiqueService from '../services/CritiqueService'; // Direct import for CritiqueService
-
-// Default hardcoded communities to show if service fails
-const DEFAULT_COMMUNITIES = [
-  {
-    id: 1,
-    name: 'r/ijuneneedshelp',
-    description: 'Community board for Iijune to get feedback for design',
-    createdDate: 'Mar 13, 2024',
-    visibility: 'Public',
-    stats: {
-      members: 20,
-      online: 10
-    }
-  },
-  {
-    id: 2,
-    name: 'r/Graphic4ever',
-    description: 'A community for graphic designers to share and critique professional work',
-    createdDate: 'Jan 15, 2024',
-    visibility: 'Public',
-    stats: {
-      members: 50,
-      online: 25
-    }
-  }
-];
+import critiqueService from '../services/CritiqueService';
+import { useAuth } from '../contexts/AuthContext';
 
 const Explore = () => {
   const [communities, setCommunities] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const { currentUser } = useAuth(); // Get current user from auth context
 
   useEffect(() => {
     const fetchCommunities = async () => {
       try {
         setLoading(true);
+        setError(null);
         
-        try {
-          // Get all communities from service
-          const allCommunities = await critiqueService.getAllCommunities();
+        // Get all communities from service
+        const allCommunities = await critiqueService.getAllCommunities();
+        
+        if (currentUser) {
+          // Get communities this user has created
+          const userCreatedCommunities = await critiqueService.getUserCreatedCommunities(currentUser.displayName);
+          const createdIds = userCreatedCommunities.map(c => c.id);
           
-          // Filter to only show public communities
+          // Filter to show:
+          // 1. All public communities
+          // 2. Private communities the user has created
+          const filteredCommunities = allCommunities.filter(
+            community => (
+              community.visibility === 'Public' || 
+              (community.visibility === 'Private' && createdIds.includes(community.id))
+            )
+          );
+          
+          setCommunities(filteredCommunities);
+        } else {
+          // If no user is logged in, only show public communities
           const publicCommunities = allCommunities.filter(
             community => community.visibility === 'Public'
           );
-          
-          if (publicCommunities && publicCommunities.length > 0) {
-            setCommunities(publicCommunities);
-          } else {
-            // Fallback to default communities if no public communities found
-            setCommunities(DEFAULT_COMMUNITIES.filter(c => c.visibility === 'Public'));
-          }
-        } catch (serviceError) {
-          console.error("Error using CritiqueService:", serviceError);
-          // Fallback to default communities (only public ones)
-          setCommunities(DEFAULT_COMMUNITIES.filter(c => c.visibility === 'Public'));
+          setCommunities(publicCommunities);
         }
       } catch (error) {
         console.error('Error fetching communities:', error);
-        setCommunities(DEFAULT_COMMUNITIES.filter(c => c.visibility === 'Public'));
+        setError('Failed to load communities. Please try again later.');
+        setCommunities([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchCommunities();
-  }, []);
-
-  // Current user - in a real app would come from auth context
-  const currentUser = {
-    name: window.currentUserName || localStorage.getItem('currentUserName') || 'Current User',
-    id: localStorage.getItem('userId') || null
-  };
+  }, [currentUser]); // Re-fetch when currentUser changes
 
   const handleJoinCommunity = async (communityId) => {
+    if (!currentUser) {
+      alert('Please sign in to join communities');
+      // Optionally redirect to login page
+      return;
+    }
+    
     try {
-      await critiqueService.followCommunity(currentUser.name, communityId);
+      await critiqueService.followCommunity(currentUser.displayName, communityId);
       alert(`Joined community successfully`);
       
       // Refresh the communities to update the UI
       const allCommunities = await critiqueService.getAllCommunities();
-      const publicCommunities = allCommunities.filter(
-        community => community.visibility === 'Public'
+      const userCreatedCommunities = await critiqueService.getUserCreatedCommunities(currentUser.displayName);
+      const createdIds = userCreatedCommunities.map(c => c.id);
+      
+      const filteredCommunities = allCommunities.filter(
+        community => (
+          community.visibility === 'Public' || 
+          (community.visibility === 'Private' && createdIds.includes(community.id))
+        )
       );
-      setCommunities(publicCommunities);
+      
+      setCommunities(filteredCommunities);
     } catch (error) {
       console.error('Error joining community:', error);
       alert('Failed to join community. Please try again.');
@@ -99,6 +91,13 @@ const Explore = () => {
       
       {loading ? (
         <div className="communities-loading">Loading communities...</div>
+      ) : error ? (
+        <div className="error-message">
+          <p>{error}</p>
+          <Link to="/create-community" className="create-community-btn">
+            Create Your First Community
+          </Link>
+        </div>
       ) : communities.length > 0 ? (
         <>
           <p>Discover and join public communities</p>
@@ -106,7 +105,12 @@ const Explore = () => {
             {communities.map(community => (
               <div key={community.id} className="c-community-card">
                 <div className="community-card-header">
-                  <h2>{community.name}</h2>
+                  <h2>
+                    {community.name}
+                    {community.visibility === 'Private' && (
+                      <span className="community-privacy-badge" title="Private Community">🔒</span>
+                    )}
+                  </h2>
                   <span className="community-members">
                     {community.stats?.members || 0} members
                   </span>

@@ -92,6 +92,28 @@ export const isUserFollowingCommunity = async (username, communityId) => {
   }
 };
 
+// Add a method to delete all communities (admin function)
+export const deleteAllCommunities = async () => {
+  try {
+    const result = await critiqueService.deleteAllCommunities();
+    return result;
+  } catch (error) {
+    console.error('Error in communityService.deleteAllCommunities:', error);
+    throw error;
+  }
+};
+
+// Add a method to delete a specific community
+export const deleteCommunityById = async (communityId) => {
+  try {
+    const result = await critiqueService.deleteCommunityById(communityId);
+    return result;
+  } catch (error) {
+    console.error('Error in communityService.deleteCommunityById:', error);
+    throw error;
+  }
+};
+
 export default {
   createCommunity,
   getCommunityByName,
@@ -100,5 +122,7 @@ export default {
   getUserFollowedCommunities,
   followCommunity,
   unfollowCommunity,
-  isUserFollowingCommunity
+  isUserFollowingCommunity,
+  deleteAllCommunities,
+  deleteCommunityById
 };

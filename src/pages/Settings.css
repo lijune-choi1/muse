@@ -1,40 +1,232 @@
 /* src/pages/Settings.css */
 .settings-container {
-    margin:auto;
-    max-width: 800px;
-    padding: 20px;
-  }
-  
-  .settings-title {
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin-bottom: 2rem;
-  }
-  
-  .settings-section {
-    margin-bottom: 2rem;
-  }
-  
-  .section-title {
-    font-size: 1rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
-  }
-  
+  margin: auto;
+  max-width: 800px;
+  padding: 20px;
+}
+
+.settings-title {
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-bottom: 2rem;
+  color: #333;
+}
+
+.settings-message {
+  padding: 12px 16px;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+  font-size: 14px;
+}
+
+.settings-message.success {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+}
+
+.settings-message.error {
+  background-color: #ffebee;
+  color: #c62828;
+  border: 1px solid #ffcdd2;
+}
+
+.settings-section {
+  margin-bottom: 2.5rem;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  padding: 1rem 1.5rem;
+  margin: 0;
+  border-bottom: 1px solid #eee;
+  background-color: #f9f9f9;
+  color: #333;
+}
+
+.settings-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #eee;
+}
+
+.settings-row:last-child {
+  border-bottom: none;
+}
+
+.setting-label {
+  font-size: 0.95rem;
+  color: #333;
+  font-weight: 500;
+}
+
+.setting-value {
+  font-size: 0.95rem;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.edit-button {
+  background-color: transparent;
+  color: #4285F4;
+  border: none;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.edit-button:hover {
+  background-color: #f0f7ff;
+  text-decoration: underline;
+}
+
+.edit-button:disabled {
+  color: #999;
+  cursor: not-allowed;
+  background-color: transparent;
+}
+
+.edit-button:disabled:hover {
+  background-color: transparent;
+  text-decoration: none;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 24px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 24px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+  background-color: #4285F4;
+}
+
+input:focus + .toggle-slider {
+  box-shadow: 0 0 1px #4285F4;
+}
+
+input:checked + .toggle-slider:before {
+  transform: translateX(16px);
+}
+
+/* Logout confirm section */
+.confirm-logout {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.confirm-yes, .confirm-no {
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border: none;
+}
+
+.confirm-yes {
+  background-color: #d32f2f;
+  color: white;
+}
+
+.confirm-yes:hover {
+  background-color: #b71c1c;
+}
+
+.confirm-no {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+.confirm-no:hover {
+  background-color: #d0d0d0;
+}
+
+.logout-button {
+  background-color: #f5f5f5;
+  color: #333;
+  border: 1px solid #ddd;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.logout-button:hover {
+  background-color: #e0e0e0;
+}
+
+.danger-row {
+  background-color: #fff8f8;
+}
+
+.delete-account-button {
+  background-color: transparent;
+  color: #d32f2f;
+  border: 1px solid #d32f2f;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.delete-account-button:hover {
+  background-color: #ffebee;
+}
+
+@media (max-width: 600px) {
   .settings-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 0;
-    border-bottom: 1px solid #eee;
-  }
-  
-  .setting-label {
-    font-size: 0.875rem;
-    color: #333;
+    flex-direction: column;
+    align-items: flex-start;
   }
   
   .setting-value {
-    font-size: 0.875rem;
-    color: #666;
+    margin-top: 8px;
   }
+  
+  .confirm-logout {
+    margin-top: 8px;
+  }
+}
