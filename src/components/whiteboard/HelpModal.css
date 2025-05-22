@@ -1,0 +1,182 @@
+/* src/components/whiteboard/HelpModal.css */
+.help-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease-out;
+  }
+  
+  .help-modal-content {
+    background-color: white;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    animation: modalSlideIn 0.3s ease-out;
+  }
+  
+  .help-modal-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    background-color: white;
+    z-index: 5;
+  }
+  
+  .help-modal-title {
+    margin: 0;
+    font-size: 20px;
+    color: #202124;
+    font-weight: 500;
+  }
+  
+  .help-modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #5f6368;
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+  }
+  
+  .help-modal-close:hover {
+    background-color: #f1f3f4;
+  }
+  
+  .help-modal-body {
+    padding: 24px;
+    overflow-y: auto;
+  }
+  
+  .help-section {
+    margin-bottom: 24px;
+  }
+  
+  .help-section h3 {
+    margin-top: 0;
+    margin-bottom: 12px;
+    font-size: 16px;
+    color: #202124;
+    font-weight: 500;
+  }
+  
+  .help-section ul {
+    margin: 0;
+    padding-left: 24px;
+  }
+  
+  .help-section li {
+    margin-bottom: 8px;
+    line-height: 1.5;
+    color: #3c4043;
+  }
+  
+  .help-section p {
+    margin-top: 0;
+    margin-bottom: 12px;
+    line-height: 1.5;
+    color: #3c4043;
+  }
+  
+  .shortcuts-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+  }
+  
+  .shortcuts-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #e0e0e0;
+    color: #3c4043;
+  }
+  
+  .shortcuts-table tr:last-child td {
+    border-bottom: none;
+  }
+  
+  .shortcuts-table td:first-child {
+    width: 150px;
+  }
+  
+  kbd {
+    background-color: #f1f3f4;
+    border: 1px solid #dadce0;
+    border-radius: 3px;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+    color: #202124;
+    display: inline-block;
+    font-family: monospace;
+    font-size: 12px;
+    line-height: 1;
+    padding: 4px 6px;
+    white-space: nowrap;
+  }
+  
+  .help-modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: flex-end;
+  }
+  
+  .help-modal-button {
+    background-color: #1a73e8;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 24px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .help-modal-button:hover {
+    background-color: #1765cc;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes modalSlideIn {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .help-modal-content {
+      width: 95%;
+    }
+    
+    .help-section h3 {
+      font-size: 15px;
+    }
+    
+    .shortcuts-table td:first-child {
+      width: 120px;
+    }
+  }

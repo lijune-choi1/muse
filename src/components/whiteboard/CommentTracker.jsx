@@ -6,16 +6,36 @@ const CommentTracker = ({
   comments = [], 
   onCommentSelect, 
   selectedCommentId, 
+  // Default collapsed state is set to false to ensure it's always open initially
   collapsed = false, 
   onToggleCollapse 
 }) => {
-  const [filter, setFilter] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isCollapsed, setIsCollapsed] = useState(collapsed);
+  // Initialize state as not collapsed (always open)
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
-  // Initialize with prop collapsed state
+  // When component mounts or when whiteboard changes, ensure it's expanded
   useEffect(() => {
-    setIsCollapsed(collapsed);
+    // Always reset to expanded state when entering a whiteboard
+    setIsCollapsed(false);
+    
+    // Notify parent component if necessary
+    if (onToggleCollapse && collapsed !== false) {
+      onToggleCollapse(false);
+    }
+  }, []); // Empty dependency array means this runs when component mounts (when entering whiteboard)
+
+  // If parent component tries to update collapsed state, respect it
+  // but only after initial mount
+  useEffect(() => {
+    // Skip the first render to prevent overriding our "always open" behavior
+    const handleCollapseUpdate = () => {
+      setIsCollapsed(collapsed);
+    };
+
+    // Use a timeout to ensure this runs after the initial mount effect
+    const timeoutId = setTimeout(handleCollapseUpdate, 100);
+    
+    return () => clearTimeout(timeoutId);
   }, [collapsed]);
 
   // Calculate counts for each comment type
@@ -27,6 +47,9 @@ const CommentTracker = ({
   }, { total: 0 });
 
   // Filter comments based on selected filter and search term
+  const [filter, setFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  
   const filteredComments = comments.filter(comment => {
     // Type filter
     if (filter !== 'all' && comment.type?.toLowerCase() !== filter) {
@@ -112,7 +135,7 @@ const CommentTracker = ({
 
   return (
     <div className={`comment-tracker ${isCollapsed ? 'collapsed' : ''}`}>
-      {/* Collapse toggle button */}
+      {/* Collapse toggle button - always visible */}
       <button 
         className="collapse-toggle" 
         onClick={toggleCollapse}
@@ -121,6 +144,7 @@ const CommentTracker = ({
         {isCollapsed ? '»' : '«'}
       </button>
       
+      {/* Only render content when not collapsed */}
       {!isCollapsed && (
         <>
           <div className="tracker-header">

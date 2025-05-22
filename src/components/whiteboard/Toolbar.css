@@ -1,107 +1,100 @@
 /* src/components/whiteboard/Toolbar.css */
-.toolbar-container {
+.sidebar-toolbar {
   position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 50%;
+  left: 16px;
+  transform: translateY(-50%);
   display: flex;
+  flex-direction: column;
   background-color: #ffffff;
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
   z-index: 100;
   align-items: center;
+  padding: 8px 0;
 }
 
 .toolbar-button {
-  padding: 12px 20px;
-  color: black;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #444;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
   border: none;
   background: none;
-  font-size: 14px;
-  white-space: nowrap;
+  font-size: 18px;
+  position: relative;
+  margin: 4px 0;
 }
 
 .toolbar-button:hover {
   background-color: rgba(0, 0, 0, 0.05);
+  color: #111;
 }
 
 .toolbar-button.active {
-  background-color: rgba(0, 0, 0, 0.1);
-  font-weight: 600;
+  color: #e87a1a;
+  background-color: rgba(232, 170, 26, 0.1);
 }
 
-/* Mode group containing mode button and its controls */
-.mode-group {
-  display: flex;
-  align-items: center;
-  border-right: 1px solid #eee;
-}
-
-/* Controls that appear next to the Comment Mode button */
-.mode-controls {
-  display: flex;
-  padding: 0 12px;
-  gap: 15px;
-  border-left: 1px solid #eee;
-  height: 100%;
-  align-items: center;
-}
-
-/* Individual control options (checkboxes) */
-.control-option {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 13px;
-  cursor: pointer;
-  user-select: none;
-  color: #555;
-}
-
-.control-option input {
-  margin: 0;
-  cursor: pointer;
-}
-
-.control-option span {
-  margin-top: 1px;
+.toolbar-divider {
+  width: 24px;
+  height: 1px;
+  background-color: #e0e0e0;
+  margin: 8px 0;
 }
 
 /* Special styling for annotation mode button */
-.toolbar-button[class*='annotate'].active {
+.toolbar-button .icon-annotate {
+  color: inherit;
+}
+
+.toolbar-button.active .icon-annotate {
   color: #ff4136;
 }
 
+/* Mode tooltip */
+.toolbar-button::after {
+  content: attr(title);
+  position: absolute;
+  left: 50px;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 1000;
+}
+
+.toolbar-button:hover::after {
+  opacity: 1;
+}
+
+/* Icons */
+.icon-select, .icon-comment, .icon-annotate, .icon-group, .icon-links, .icon-help {
+  font-style: normal;
+}
+
 /* Responsive adjustments */
-@media (max-width: 600px) {
-  .toolbar-container {
-    width: 95%;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-  
-  .mode-group {
-    flex-direction: column;
-    border-right: none;
-    border-bottom: 1px solid #eee;
-    width: 100%;
-  }
-  
-  .mode-controls {
-    width: 100%;
-    justify-content: center;
-    padding: 8px;
-    border-left: none;
-    border-top: 1px solid #eee;
+@media (max-width: 768px) {
+  .sidebar-toolbar {
+    left: 8px;
   }
   
   .toolbar-button {
-    padding: 10px 15px;
-    width: 100%;
-    text-align: center;
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
   }
 }

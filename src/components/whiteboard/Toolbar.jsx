@@ -1,5 +1,6 @@
 // src/components/whiteboard/ToolBar.jsx
 import React from 'react';
+import './Toolbar.css';
 
 const ToolBar = ({ 
   currentMode, 
@@ -7,57 +8,70 @@ const ToolBar = ({
   showLinks = true, 
   setShowLinks, 
   clusteringEnabled = true, 
-  setClusteringEnabled 
+  setClusteringEnabled,
+  onHelpClick  // Added help button click handler
 }) => {
   return (
-    <div className="toolbar-container">
-      {/* Comment Mode with its related controls */}
-      <div className="mode-group">
-        <button 
-          className={`toolbar-button ${currentMode === 'comment' ? 'active' : ''}`}
-          onClick={() => setMode('comment')}
-        >
-          Comment Mode
-        </button>
-        
-        {/* Only show these controls when in comment mode */}
-        {(currentMode === 'comment' || currentMode === 'select') && (
-          <div className="mode-controls">
-            <label className="control-option">
-              <input
-                type="checkbox"
-                checked={clusteringEnabled}
-                onChange={() => setClusteringEnabled(!clusteringEnabled)}
-              />
-              <span>Group</span>
-            </label>
-            
-            <label className="control-option">
-              <input
-                type="checkbox"
-                checked={showLinks}
-                onChange={() => setShowLinks(!showLinks)}
-              />
-              <span>Links</span>
-            </label>
-          </div>
-        )}
-      </div>
+    <div className="sidebar-toolbar">
+      {/* Main mode buttons - vertical layout */}
+      <button 
+        className={`toolbar-button ${currentMode === 'select' ? 'active' : ''}`}
+        onClick={() => setMode('select')}
+        title="Select Mode"
+      >
+        <i className="icon-select">⊙</i>
+      </button>
       
-      {/* Annotate mode (renamed from Draw) */}
+      <button 
+        className={`toolbar-button ${currentMode === 'comment' ? 'active' : ''}`}
+        onClick={() => setMode('comment')}
+        title="Comment Mode"
+      >
+        <i className="icon-comment">✎</i>
+      </button>
+      
       <button 
         className={`toolbar-button ${currentMode === 'annotate' ? 'active' : ''}`}
         onClick={() => setMode('annotate')}
+        title="Annotate Mode"
       >
-        Annotate Mode
+        <i className="icon-annotate">✏️</i>
       </button>
+      
+      {/* Divider */}
+      <div className="toolbar-divider"></div>
+      
+      {/* Comment settings - only visible when in comment or select mode */}
+      {(currentMode === 'comment' || currentMode === 'select') && (
+        <>
+          <button
+            className={`toolbar-button ${clusteringEnabled ? 'active' : ''}`}
+            onClick={() => setClusteringEnabled(!clusteringEnabled)}
+            title={clusteringEnabled ? "Disable Comment Grouping" : "Enable Comment Grouping"}
+          >
+            <i className="icon-group">⌘</i>
+          </button>
+          
+          <button
+            className={`toolbar-button ${showLinks ? 'active' : ''}`}
+            onClick={() => setShowLinks(!showLinks)}
+            title={showLinks ? "Hide Comment Links" : "Show Comment Links"}
+          >
+            <i className="icon-links">⟀</i>
+          </button>
+        </>
+      )}
+      
+      {/* Divider */}
+      <div className="toolbar-divider"></div>
       
       {/* Help button */}
       <button 
         className="toolbar-button"
-        onClick={() => {/* Trigger help/explainer */}}
+        onClick={onHelpClick}  // Use the provided handler
+        title="Help"
       >
-        Help
+        <i className="icon-help">?</i>
       </button>
     </div>
   );

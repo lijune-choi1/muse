@@ -131,14 +131,7 @@ const Sidebar = () => {
       </nav>
 
       <div className="sidebar-section">
-        <div className="sidebar-create-community">
-          <Link to="/create-critique-room" className="sidebar-link sidebar-create-btn">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            Create Community
-          </Link>
-        </div>
+     
 
         {/* Owned Communities Section */}
         {isLoading ? (
@@ -148,6 +141,11 @@ const Sidebar = () => {
             {ownedCommunities && ownedCommunities.length > 0 && (
               <>
                 <h2 className="sidebar-heading">MY COMMUNITIES</h2>
+                <div className="sidebar-create-community">
+          <Link to="/create-critique-room" className="sidebar-link sidebar-create-btn">
+            + Create Community
+          </Link>
+        </div>
                 <ul>
                   {ownedCommunities.map((community) => (
                     <li key={community.id} className="sidebar-item">
