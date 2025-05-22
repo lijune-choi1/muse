@@ -1,4 +1,4 @@
-// CommentBubble.jsx with proper user name display
+// CommentBubble.jsx with simple user initials instead of images
 import React, { useState, useEffect, useRef } from 'react';
 import './CommentBubble.css';
 
@@ -58,6 +58,36 @@ const Icon = ({ type, size = 16, color = "currentColor" }) => {
   };
 
   return icons[type] || null;
+};
+
+// User Avatar Component - Simple colored circle with initials
+const UserAvatar = ({ userName, size = 32, className = "" }) => {
+  const getInitial = (name) => {
+    if (!name || name.trim() === "") return "?";
+    return name.trim().charAt(0).toUpperCase();
+  };
+
+  return (
+    <div 
+      className={`user-avatar ${className}`}
+      style={{
+        width: size,
+        height: size,
+        borderRadius: "50%",
+        backgroundColor: "#ff8c00", // Orange background
+        color: "white",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: `${size * 0.4}px`,
+        fontWeight: "bold",
+        border: "2px solid white",
+        flexShrink: 0
+      }}
+    >
+      {getInitial(userName)}
+    </div>
+  );
 };
 
 const CommentBubble = ({ 
@@ -227,7 +257,6 @@ const CommentBubble = ({
     const newReply = {
       id: `reply-${Date.now()}`,
       author: userProfile?.name || "Anonymous",
-      avatar: userProfile?.avatar || "/assets/images/default-avatar.png",
       content: replyText,
       timestamp: new Date().toISOString()
     };
@@ -270,9 +299,6 @@ const CommentBubble = ({
     return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
   };
 
-  // Determine user profile information - use the comment author name when available,
-  // fallback to the current user's name, or use Anonymous as last resort
-  
   // Get current user name from multiple sources
   const getCurrentUser = () => {
     // Check window global (set by our fixJaneDoe script)
@@ -300,8 +326,6 @@ const CommentBubble = ({
     : getCurrentUser();
     
   let userName = commentAuthor;
-  
-  const userAvatar = comment.avatar || userProfile?.avatar || "/assets/images/default-avatar.png";
   
   console.log("Current user name being displayed:", userName);
   
@@ -333,11 +357,7 @@ const CommentBubble = ({
     bubbleContent = (
       <>
         <div className="user-section">
-          <img 
-            src={userAvatar}
-            alt={userName} 
-            className="user-icon" 
-          />
+          <UserAvatar userName={userName} size={32} className="user-icon" />
           <div 
             className={`comment-type-pill ${localComment.type}`} 
             style={{backgroundColor: currentCategory.color}}
@@ -372,11 +392,7 @@ const CommentBubble = ({
       <>
         <div className="comment-bubble-header">
           <div className="user-section">
-            <img 
-              src={userAvatar}
-              alt={userName} 
-              className="user-icon" 
-            />
+            <UserAvatar userName={userName} size={32} className="user-icon" />
             <span>{userName}</span>
           </div>
           <div className="header-actions">
@@ -446,11 +462,7 @@ const CommentBubble = ({
           onContextMenu={handleTypeChange}
         >
           <div className="user-section">
-            <img 
-              src={userAvatar}
-              alt={userName} 
-              className="user-icon" 
-            />
+            <UserAvatar userName={userName} size={32} className="user-icon" />
             <span>{userName}</span>
           </div>
           <div 
@@ -540,11 +552,7 @@ const CommentBubble = ({
           {localComment.replies && localComment.replies.map(reply => (
             <div key={reply.id} className="reply-item">
               <div className="reply-header">
-                <img 
-                  src={reply.avatar || userAvatar}
-                  alt={reply.author} 
-                  className="reply-avatar" 
-                />
+                <UserAvatar userName={reply.author} size={20} className="reply-avatar" />
                 <span className="reply-author">{reply.author}</span>
                 <span className="reply-time">{formatTime(reply.timestamp)}</span>
               </div>

@@ -1,4 +1,4 @@
-// src/services/CritiqueService.js
+// src/services/CritiqueService.js - Fixed with threadId support
 import { 
   collection, 
   addDoc, 
@@ -54,8 +54,7 @@ class CritiqueService {
     return true; // Just return true without adding any data
   }
 
-  // The rest of the class methods remain unchanged...
-  // Create a new post
+  // Create a new post - FIXED to include threadId
   async createPost(postData) {
     try {
       const user = auth.currentUser;
@@ -82,8 +81,14 @@ class CritiqueService {
         status: postData.status || 'just-started',
         editNumber: 0,
         comments: [],
+        threadId: postData.threadId || null, // FIXED: Include threadId
         createdAt: serverTimestamp()
       };
+      
+      console.log("=== CRITIQUE SERVICE DEBUG ===");
+      console.log("Received postData:", postData);
+      console.log("Saving newPost with threadId:", newPost.threadId);
+      console.log("==============================");
       
       // Add to Firestore
       const docRef = await addDoc(collection(db, 'posts'), newPost);
@@ -117,7 +122,7 @@ class CritiqueService {
       }
       
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({
+      const posts = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
         date: doc.data().createdAt?.toDate()?.toLocaleDateString('en-US', {
@@ -126,6 +131,15 @@ class CritiqueService {
           year: 'numeric'
         }) || 'Unknown date'
       }));
+      
+      console.log("=== GET ALL POSTS DEBUG ===");
+      console.log("Community:", communityName);
+      console.log("Posts found:", posts.length);
+      console.log("Posts with threadId:", posts.filter(p => p.threadId).length);
+      console.log("Posts without threadId (threads):", posts.filter(p => !p.threadId).length);
+      console.log("===========================");
+      
+      return posts;
     } catch (error) {
       console.error('Error getting posts:', error);
       throw error;
@@ -408,7 +422,7 @@ class CritiqueService {
         throw new Error(`Post with ID ${postId} not found`);
       }
       
-      return {
+      const postData = {
         id: docSnap.id,
         ...docSnap.data(),
         date: docSnap.data().createdAt?.toDate()?.toLocaleDateString('en-US', {
@@ -417,13 +431,20 @@ class CritiqueService {
           year: 'numeric'
         }) || 'Unknown date'
       };
+      
+      console.log("=== GET POST BY ID DEBUG ===");
+      console.log("Post ID:", postId);
+      console.log("Post threadId:", postData.threadId);
+      console.log("============================");
+      
+      return postData;
     } catch (error) {
       console.error('Error getting post by ID:', error);
       throw error;
     }
   }
 
-  // Update an existing post
+  // Update an existing post - FIXED to include threadId
   async updatePost(postData) {
     try {
       const user = auth.currentUser;
@@ -461,10 +482,21 @@ class CritiqueService {
         updatedAt: serverTimestamp()
       };
       
+      // FIXED: Include threadId in updates if provided
+      if (postData.hasOwnProperty('threadId')) {
+        updateData.threadId = postData.threadId;
+      }
+      
       // Only update imageUrl if a new image was uploaded
       if (postData.imageFile) {
         updateData.imageUrl = imageUrl;
       }
+      
+      console.log("=== UPDATE POST DEBUG ===");
+      console.log("Received postData:", postData);
+      console.log("Existing threadId:", existingPost.threadId);
+      console.log("Updating with threadId:", updateData.threadId);
+      console.log("=========================");
       
       await updateDoc(doc(db, 'posts', postData.id), updateData);
       
