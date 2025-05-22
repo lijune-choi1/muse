@@ -1,4 +1,3 @@
-// src/components/common/CommentBubbleManager.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { getFirestore } from 'firebase/firestore';
