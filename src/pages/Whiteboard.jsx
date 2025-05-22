@@ -17,6 +17,7 @@ const Whiteboard = () => {
   const { postId } = useParams();
   const navigate = useNavigate();
   const canvasRef = useRef();
+  const cursorManagerRef = useRef(null);
   const { currentUser } = useAuth();
   
   // Activity tracking
@@ -91,9 +92,10 @@ const Whiteboard = () => {
     setTrackerCollapsed(false);
   }, []);
 
-  // Set up custom event listeners for comment activities
+  // Set up custom event listeners for comment activities with improved handling
   useEffect(() => {
     const handleCommentActivity = (event) => {
+      console.log('Whiteboard received comment activity event:', event.detail);
       const { comment, activityType } = event.detail;
       
       // Get the comment's position in screen coordinates
@@ -101,15 +103,33 @@ const Whiteboard = () => {
         const screenX = comment.position.x * zoomLevel + localPan.x;
         const screenY = comment.position.y * zoomLevel + localPan.y;
         
-        // Register with Firebase via CursorManager
-        registerCommentActivity(
-          { ...comment, position: { x: screenX, y: screenY } },
-          activityType
-        );
+        console.log('Converting comment position:', { 
+          original: comment.position, 
+          screen: { x: screenX, y: screenY },
+          zoom: zoomLevel,
+          pan: localPan 
+        });
+        
+        // Call the CursorManager method directly if we have a ref to it
+        if (cursorManagerRef.current && cursorManagerRef.current.registerCommentActivity) {
+          console.log('Calling CursorManager method directly');
+          cursorManagerRef.current.registerCommentActivity(
+            { ...comment, position: { x: screenX, y: screenY } },
+            activityType
+          );
+        } else {
+          console.log('CursorManager ref not available, using fallback');
+          // Fallback: dispatch to global handler
+          registerCommentActivity(
+            { ...comment, position: { x: screenX, y: screenY } },
+            activityType
+          );
+        }
       }
     };
     
     const handleLinkingActivity = (event) => {
+      console.log('Whiteboard received linking activity event:', event.detail);
       const { sourceCommentId, targetCommentId, sourcePosition, targetPosition } = event.detail;
       
       // Convert positions to screen coordinates
@@ -119,19 +139,38 @@ const Whiteboard = () => {
         const screenTargetX = targetPosition.x * zoomLevel + localPan.x;
         const screenTargetY = targetPosition.y * zoomLevel + localPan.y;
         
-        // Register with Firebase via CursorManager
-        registerLinkingActivity(
-          sourceCommentId,
-          targetCommentId,
-          { x: screenSourceX, y: screenSourceY },
-          { x: screenTargetX, y: screenTargetY }
-        );
+        console.log('Converting linking positions:', { 
+          source: { original: sourcePosition, screen: { x: screenSourceX, y: screenSourceY } },
+          target: { original: targetPosition, screen: { x: screenTargetX, y: screenTargetY } }
+        });
+        
+        // Call the CursorManager method directly if we have a ref to it
+        if (cursorManagerRef.current && cursorManagerRef.current.registerLinkingActivity) {
+          console.log('Calling CursorManager linking method directly');
+          cursorManagerRef.current.registerLinkingActivity(
+            sourceCommentId,
+            targetCommentId,
+            { x: screenSourceX, y: screenSourceY },
+            { x: screenTargetX, y: screenTargetY }
+          );
+        } else {
+          console.log('CursorManager ref not available for linking, using fallback');
+          // Fallback: dispatch to global handler
+          registerLinkingActivity(
+            sourceCommentId,
+            targetCommentId,
+            { x: screenSourceX, y: screenSourceY },
+            { x: screenTargetX, y: screenTargetY }
+          );
+        }
       }
     };
     
+    // Add event listeners
     window.addEventListener('register-comment-activity', handleCommentActivity);
     window.addEventListener('register-linking-activity', handleLinkingActivity);
     
+    // Cleanup
     return () => {
       window.removeEventListener('register-comment-activity', handleCommentActivity);
       window.removeEventListener('register-linking-activity', handleLinkingActivity);
@@ -336,20 +375,32 @@ const Whiteboard = () => {
     }
   };
 
-  // Handle comment added/edited for real-time tracking
+  // Enhanced comment activity handler that ensures events are fired
   const handleCommentActivity = (comment, activityType) => {
-    // Dispatch custom event for the activity tracking
+    console.log('handleCommentActivity called:', { commentId: comment.id, activityType });
+    
+    // Immediately dispatch the custom event
     const event = new CustomEvent('register-comment-activity', {
       detail: { comment, activityType }
     });
     window.dispatchEvent(event);
+    
+    // Also try direct call if possible
+    if (cursorManagerRef.current && cursorManagerRef.current.registerCommentActivity) {
+      cursorManagerRef.current.registerCommentActivity(comment, activityType);
+    }
   };
 
-  // Handle linking activity for real-time tracking
+  // Enhanced linking activity handler that ensures events are fired
   const handleLinkingActivity = (sourceComment, targetComment) => {
     if (!sourceComment || !targetComment) return;
     
-    // Dispatch custom event for the activity tracking
+    console.log('handleLinkingActivity called:', { 
+      sourceId: sourceComment.id, 
+      targetId: targetComment.id 
+    });
+    
+    // Immediately dispatch the custom event
     const event = new CustomEvent('register-linking-activity', {
       detail: {
         sourceCommentId: sourceComment.id,
@@ -359,6 +410,16 @@ const Whiteboard = () => {
       }
     });
     window.dispatchEvent(event);
+    
+    // Also try direct call if possible
+    if (cursorManagerRef.current && cursorManagerRef.current.registerLinkingActivity) {
+      cursorManagerRef.current.registerLinkingActivity(
+        sourceComment.id,
+        targetComment.id,
+        sourceComment.position,
+        targetComment.position
+      );
+    }
   };
 
   // Handle help button click
@@ -471,6 +532,7 @@ const Whiteboard = () => {
         {/* Cursor Manager - shows other users' cursors and activities */}
         {cursorTrackingEnabled && (
           <CursorManager
+            ref={cursorManagerRef}
             designId={postId}
             currentUser={currentUser}
             canvasRef={canvasRef}
@@ -534,6 +596,15 @@ const Whiteboard = () => {
         {/* Divider */}
         <div className="toolbar-divider"></div>
         
+        {/* Cursor tracking toggle */}
+        <button 
+          className={`toolbar-button ${cursorTrackingEnabled ? 'active' : ''}`}
+          onClick={toggleCursorTracking}
+          title={cursorTrackingEnabled ? "Disable Cursor Tracking" : "Enable Cursor Tracking"}
+        >
+          <i className="icon-cursor">👁</i>
+        </button>
+        
         {/* Help button */}
         <button 
           className="toolbar-button"
@@ -568,10 +639,15 @@ const Whiteboard = () => {
             <span className="user-dot" style={{ backgroundColor: '#4285F4' }}></span>
             <span>{activeUserCount} {activeUserCount === 1 ? 'user' : 'users'} online</span>
           </div>
+          <button 
+            className="cursor-toggle-button"
+            onClick={toggleCursorTracking}
+            title="Toggle cursor tracking"
+          >
+            👁
+          </button>
         </div>
       )}
-      
-      {/* Clustering information tooltip - only shown when clustering is enabled */}
       
     </div>
   );
