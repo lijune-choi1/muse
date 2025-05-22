@@ -1,14 +1,14 @@
-// src/pages/Whiteboard.jsx - With Cursor Tracking
+// src/pages/Whiteboard.jsx
 import React, { useRef, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import WhiteboardCanvas from '../components/whiteboard/WhiteboardCanvas';
 import CommentTracker from '../components/whiteboard/CommentTracker';
 import CommentSystemExplainer from '../components/whiteboard/CommentSystemExplainer';
 import AnnotationLayer from '../components/whiteboard/AnnotationLayer';
-import CursorManager from '../components/whiteboard/CursorManager';
+import CursorManager, { useCommentActivityTracking } from '../components/whiteboard/CursorManager';
+import HelpModal from '../components/whiteboard/HelpModal';
 import critiqueService from '../services/CritiqueService';
 import commentService from '../services/CommentService';
-import ToolBar from '../components/whiteboard/Toolbar';
 import { useAuth } from '../contexts/AuthContext';
 import '../components/whiteboard/Toolbar.css';
 import './Whiteboard.css';
@@ -18,6 +18,9 @@ const Whiteboard = () => {
   const navigate = useNavigate();
   const canvasRef = useRef();
   const { currentUser } = useAuth();
+  
+  // Activity tracking
+  const { registerCommentActivity, registerLinkingActivity } = useCommentActivityTracking();
   
   // State management
   const [post, setPost] = useState(null);
@@ -47,8 +50,9 @@ const Whiteboard = () => {
   
   // Cursor tracking
   const [cursorTrackingEnabled, setCursorTrackingEnabled] = useState(true);
+  const [activeUserCount, setActiveUserCount] = useState(1);
   
-  // Comment Tracker state
+  // Comment Tracker state - always starts expanded
   const [trackerCollapsed, setTrackerCollapsed] = useState(false);
   
   // Clustering states
@@ -58,6 +62,9 @@ const Whiteboard = () => {
   // Explainer state
   const [showExplainer, setShowExplainer] = useState(true);
   const [explainerDismissed, setExplainerDismissed] = useState(false);
+  
+  // Help modal state
+  const [showHelpModal, setShowHelpModal] = useState(false);
   
   // User information
   const userProfile = {
@@ -74,18 +81,62 @@ const Whiteboard = () => {
       setExplainerDismissed(true);
     }
     
-    // Check if tracker collapse state is stored
-    const trackerState = localStorage.getItem('commentTrackerCollapsed');
-    if (trackerState) {
-      setTrackerCollapsed(trackerState === 'true');
-    }
-    
     // Check cursor tracking preference
     const cursorTracking = localStorage.getItem('cursorTrackingEnabled');
     if (cursorTracking) {
       setCursorTrackingEnabled(cursorTracking === 'true');
     }
+    
+    // Always start with tracker expanded
+    setTrackerCollapsed(false);
   }, []);
+
+  // Set up custom event listeners for comment activities
+  useEffect(() => {
+    const handleCommentActivity = (event) => {
+      const { comment, activityType } = event.detail;
+      
+      // Get the comment's position in screen coordinates
+      if (comment && comment.position && canvasRef.current) {
+        const screenX = comment.position.x * zoomLevel + localPan.x;
+        const screenY = comment.position.y * zoomLevel + localPan.y;
+        
+        // Register with Firebase via CursorManager
+        registerCommentActivity(
+          { ...comment, position: { x: screenX, y: screenY } },
+          activityType
+        );
+      }
+    };
+    
+    const handleLinkingActivity = (event) => {
+      const { sourceCommentId, targetCommentId, sourcePosition, targetPosition } = event.detail;
+      
+      // Convert positions to screen coordinates
+      if (sourcePosition && targetPosition && canvasRef.current) {
+        const screenSourceX = sourcePosition.x * zoomLevel + localPan.x;
+        const screenSourceY = sourcePosition.y * zoomLevel + localPan.y;
+        const screenTargetX = targetPosition.x * zoomLevel + localPan.x;
+        const screenTargetY = targetPosition.y * zoomLevel + localPan.y;
+        
+        // Register with Firebase via CursorManager
+        registerLinkingActivity(
+          sourceCommentId,
+          targetCommentId,
+          { x: screenSourceX, y: screenSourceY },
+          { x: screenTargetX, y: screenTargetY }
+        );
+      }
+    };
+    
+    window.addEventListener('register-comment-activity', handleCommentActivity);
+    window.addEventListener('register-linking-activity', handleLinkingActivity);
+    
+    return () => {
+      window.removeEventListener('register-comment-activity', handleCommentActivity);
+      window.removeEventListener('register-linking-activity', handleLinkingActivity);
+    };
+  }, [registerCommentActivity, registerLinkingActivity, zoomLevel, localPan]);
 
   // Update visibility based on mode
   useEffect(() => {
@@ -112,7 +163,6 @@ const Whiteboard = () => {
   // Handle tracker collapse toggle
   const handleTrackerToggle = (collapsed) => {
     setTrackerCollapsed(collapsed);
-    localStorage.setItem('commentTrackerCollapsed', collapsed);
   };
   
   // Toggle cursor tracking
@@ -210,21 +260,6 @@ const Whiteboard = () => {
           console.log("No comments found in Firebase for this design");
           setComments([]);
         }
-        
-        // Load whiteboard data for annotations
-        const whiteboardData = await critiqueService.getWhiteboardData(postId);
-        console.log("Whiteboard data loaded:", whiteboardData);
-        
-        // Load any saved annotations
-        if (whiteboardData?.annotations && whiteboardData.annotations.length > 0) {
-          // Separate user and guest annotations
-          const userAnno = whiteboardData.annotations.filter(a => a.userId === userProfile.id);
-          const guestAnno = whiteboardData.annotations.filter(a => a.userId !== userProfile.id);
-          
-          setAnnotations(userAnno);
-          setGuestAnnotations(guestAnno);
-          console.log("Loaded saved annotations");
-        }
       } catch (error) {
         console.error("Error loading post or whiteboard data:", error);
       } finally {
@@ -258,22 +293,7 @@ const Whiteboard = () => {
   const handleModeChange = (newMode) => {
     // If switching from annotation mode, make sure we save any pending annotations
     if (mode === 'annotate') {
-      // You might want to add logic here to save annotations to your backend
       console.log("Saving annotations:", annotations);
-      
-      // Save annotations to database
-      const saveAnnotations = async () => {
-        try {
-          await critiqueService.saveWhiteboardData(postId, { 
-            annotations: annotations
-          });
-          console.log("Annotations saved successfully");
-        } catch (error) {
-          console.error("Error saving whiteboard annotations:", error);
-        }
-      };
-      
-      saveAnnotations();
     }
     
     setMode(newMode);
@@ -282,39 +302,11 @@ const Whiteboard = () => {
   // Handle annotation save
   const handleAnnotationSave = (newAnnotations) => {
     setAnnotations(newAnnotations);
-    
-    // Save annotations to backend
-    const saveAnnotationsToBackend = async () => {
-      try {
-        await critiqueService.saveWhiteboardData(postId, { 
-          annotations: newAnnotations
-        });
-        console.log("Annotations saved successfully");
-      } catch (error) {
-        console.error("Error saving whiteboard annotations:", error);
-      }
-    };
-    
-    saveAnnotationsToBackend();
   };
 
   // Handle annotation clear
   const handleAnnotationClear = () => {
     setAnnotations([]);
-    
-    // Clear annotations from backend
-    const clearAnnotationsFromBackend = async () => {
-      try {
-        await critiqueService.saveWhiteboardData(postId, { 
-          annotations: []
-        });
-        console.log("Annotations cleared successfully");
-      } catch (error) {
-        console.error("Error clearing whiteboard annotations:", error);
-      }
-    };
-    
-    clearAnnotationsFromBackend();
   };
 
   // Handle comment selection from the tracker
@@ -344,12 +336,63 @@ const Whiteboard = () => {
     }
   };
 
+  // Handle comment added/edited for real-time tracking
+  const handleCommentActivity = (comment, activityType) => {
+    // Dispatch custom event for the activity tracking
+    const event = new CustomEvent('register-comment-activity', {
+      detail: { comment, activityType }
+    });
+    window.dispatchEvent(event);
+  };
+
+  // Handle linking activity for real-time tracking
+  const handleLinkingActivity = (sourceComment, targetComment) => {
+    if (!sourceComment || !targetComment) return;
+    
+    // Dispatch custom event for the activity tracking
+    const event = new CustomEvent('register-linking-activity', {
+      detail: {
+        sourceCommentId: sourceComment.id,
+        targetCommentId: targetComment.id,
+        sourcePosition: sourceComment.position,
+        targetPosition: targetComment.position
+      }
+    });
+    window.dispatchEvent(event);
+  };
+
+  // Handle help button click
+  const handleHelpClick = () => {
+    setShowHelpModal(true);
+  };
+
   return (
     <div className="whiteboard-container">
+      {/* Top Navigation - similar to the reference image */}
+      <div className="whiteboard-header">
+        <button 
+          className="back-button"
+          onClick={() => navigate(-1)}
+        >
+          &#8592;
+        </button>
+        
+        <h1 className="whiteboard-title">{post?.title || "Untitled Whiteboard"}</h1>
+        
+        <div className="header-actions">
+          <button className="user-indicator">{currentUser?.displayName?.charAt(0) || "U"}</button>
+          <button className="share-button">Share</button>
+          <button className="menu-button">⋮</button>
+        </div>
+      </div>
+      
       {/* Explainer overlay */}
       {showExplainer && !explainerDismissed && (
         <CommentSystemExplainer onDismiss={handleExplainerDismiss} />
       )}
+      
+      {/* Help modal */}
+      <HelpModal isOpen={showHelpModal} onClose={() => setShowHelpModal(false)} />
       
       {/* Main canvas area */}
       <div className="canvas-wrapper" ref={canvasRef}>
@@ -403,6 +446,9 @@ const Whiteboard = () => {
             designId={postId}
             // User profile - pass current user from auth
             userProfile={userProfile}
+            // Activity tracking
+            onCommentActivity={handleCommentActivity}
+            onLinkingActivity={handleLinkingActivity}
           />
         )}
         
@@ -414,23 +460,91 @@ const Whiteboard = () => {
           initialColor="#FF0000"
           initialStrokeWidth={3}
           userProfile={userProfile}
-          guestStrokes={guestAnnotations}
+          designId={postId}
           onSave={handleAnnotationSave}
           onClear={handleAnnotationClear}
+          onAnnotationAdded={(annotation) => {
+            console.log("Annotation added:", annotation);
+          }}
         />
         
-        {/* Cursor Manager - shows other users' cursors */}
+        {/* Cursor Manager - shows other users' cursors and activities */}
         {cursorTrackingEnabled && (
           <CursorManager
             designId={postId}
             currentUser={currentUser}
             canvasRef={canvasRef}
             enabled={true}
+            onUserCountChange={setActiveUserCount}
           />
         )}
       </div>
+      
+      {/* Left sidebar toolbar - vertical layout */}
+      <div className="sidebar-toolbar">
+        {/* Main mode buttons - vertical layout */}
+        <button 
+          className={`toolbar-button ${mode === 'select' ? 'active' : ''}`}
+          onClick={() => handleModeChange('select')}
+          title="Select Mode"
+        >
+          <i className="icon-select">⊙</i>
+        </button>
+        
+        <button 
+          className={`toolbar-button ${mode === 'comment' ? 'active' : ''}`}
+          onClick={() => handleModeChange('comment')}
+          title="Comment Mode"
+        >
+          <i className="icon-comment">✎</i>
+        </button>
+        
+        <button 
+          className={`toolbar-button ${mode === 'annotate' ? 'active' : ''}`}
+          onClick={() => handleModeChange('annotate')}
+          title="Annotate Mode"
+        >
+          <i className="icon-annotate">✏️</i>
+        </button>
+        
+        {/* Divider */}
+        <div className="toolbar-divider"></div>
+        
+        {/* Comment settings - only visible when in comment or select mode */}
+        {(mode === 'comment' || mode === 'select') && (
+          <>
+            <button
+              className={`toolbar-button ${clusteringEnabled ? 'active' : ''}`}
+              onClick={() => setClusteringEnabled(!clusteringEnabled)}
+              title={clusteringEnabled ? "Disable Comment Grouping" : "Enable Comment Grouping"}
+            >
+              <i className="icon-group">⌘</i>
+            </button>
+            
+            <button
+              className={`toolbar-button ${showLinks ? 'active' : ''}`}
+              onClick={() => setShowLinks(!showLinks)}
+              title={showLinks ? "Hide Comment Links" : "Show Comment Links"}
+            >
+              <i className="icon-links">⟀</i>
+            </button>
+          </>
+        )}
+        
+        {/* Divider */}
+        <div className="toolbar-divider"></div>
+        
+        {/* Help button */}
+        <button 
+          className="toolbar-button"
+          onClick={handleHelpClick}
+          title="Help"
+        >
+          <i className="icon-help">?</i>
+        </button>
+      </div>
   
-      {/* Comment Tracker sidebar */}
+      {/* Comment Tracker sidebar - always expanded on initial load */}
       <CommentTracker
         comments={comments}
         onCommentSelect={handleTrackerCommentSelect}
@@ -439,71 +553,26 @@ const Whiteboard = () => {
         onToggleCollapse={handleTrackerToggle}
       />
   
-      <ToolBar
-        currentMode={mode}
-        setMode={handleModeChange}
-        showLinks={showLinks}
-        setShowLinks={setShowLinks}
-        clusteringEnabled={clusteringEnabled}
-        setClusteringEnabled={setClusteringEnabled}
-      />
-  
-      {/* Zoom controls */}
+      {/* Zoom controls - bottom right similar to reference image */}
       <div className="zoom-controls">
         <button className="zoom-button" onClick={() => setZoomLevel(prev => Math.min(prev * 1.2, 3))}>+</button>
         <div className="zoom-value">{Math.round(zoomLevel * 100)}%</div>
         <button className="zoom-button" onClick={() => setZoomLevel(prev => Math.max(prev / 1.2, 0.5))}>−</button>
         <button className="zoom-button" onClick={() => setZoomLevel(1)}>↺</button>
       </div>
-  
-      {/* Back button */}
-      <button 
-        className="fullscreen-button"
-        onClick={() => navigate(-1)}
-      >
-        ↩
-      </button>
       
-      {/* Cursor tracking toggle */}
-      <button 
-        className="cursor-tracking-toggle"
-        onClick={toggleCursorTracking}
-        title={cursorTrackingEnabled ? "Disable cursor tracking" : "Enable cursor tracking"}
-      >
-        {cursorTrackingEnabled ? "👁️" : "👁️‍🗨️"}
-      </button>
-      
-      {/* Collaboration indicator showing active users */}
+      {/* Active users indicator - bottom of screen similar to reference */}
       {cursorTrackingEnabled && (
         <div className="active-users-indicator">
           <div className="active-users-count">
             <span className="user-dot" style={{ backgroundColor: '#4285F4' }}></span>
-            {/* This would show the actual count from CursorManager */}
-            <span>2 users online</span>
+            <span>{activeUserCount} {activeUserCount === 1 ? 'user' : 'users'} online</span>
           </div>
         </div>
       )}
       
-      {/* Clustering information tooltip */}
-      {clusteringEnabled && mode !== 'annotate' && (
-        <div className="clustering-info-tooltip" style={{
-          position: 'absolute',
-          bottom: '70px',
-          left: '20px',
-          backgroundColor: 'rgba(52, 152, 219, 0.9)',
-          color: 'white',
-          padding: '8px 12px',
-          borderRadius: '4px',
-          fontSize: '13px',
-          maxWidth: '280px',
-          boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
-          animation: 'fadeIn 0.3s',
-          zIndex: 90
-        }}>
-          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Comment Clustering Active</div>
-          <div>Multiple comments in the same area are grouped into clusters. Click a cluster to see all comments in a thread view.</div>
-        </div>
-      )}
+      {/* Clustering information tooltip - only shown when clustering is enabled */}
+      
     </div>
   );
 };

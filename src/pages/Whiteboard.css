@@ -1,274 +1,128 @@
-/* Whiteboard.css */
+/* Whiteboard.css - Updated to match reference layout */
 .whiteboard-container {
   position: relative;
   width: 100%;
-  height: 95vh;
+  height: 100vh;
   overflow: hidden;
-  background: transparent;
+  background: #f9f9fb;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
 
-.canvas-wrapper {
+/* Header styling similar to reference image */
+.whiteboard-header {
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  background: transparent;
-}
-
-/* Top bar with metrics */
-.scorebar-container {
-  position: absolute;
-  top: 32px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  padding: 12px 20px;
-  background-color: #ffffff;
-  border-radius: 8px;
-  color: black;
-  z-index: 100;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.score-item {
+  right: 0;
+  height: 48px;
+  margin:24px;
+  background: linear-gradient(rgb(255, 244, 224),white);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  border-radius:8px;
   display: flex;
   align-items: center;
-  margin: 0 15px;
+  justify-content: space-between;
+  padding: 0 16px;
+  z-index: 100;
+}
+
+.back-button {
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
   font-size: 14px;
+  color: #1a73e8;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 4px;
+}
+
+.back-button:hover {
+  background-color: rgba(26, 115, 232, 0.05);
+}
+
+.whiteboard-title {
+  font-size: 18px;
   font-weight: 500;
+  color: #202124;
+  margin: 0;
 }
 
-.score-label {
-  margin-right: 8px;
-}
-
-.score-value {
-  font-weight: 600;
-}
-
-.total-points {
-  border-right: 1px solid rgba(255, 255, 255, 0.3);
-  padding-right: 15px;
-  margin-right: 0;
-}
-
-/* Goal indicator on the right */
-.goal-container {
-  position: absolute;
-  top: 48px;
-  right: 20px;
+.header-actions {
   display: flex;
-  padding: 12px 20px;
-  background-color: white;
-  border-radius: 8px;
-  color: black;
-  z-index: 100;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  align-items: center;
+  gap: 8px;
 }
 
-.goal-label {
-  margin-right: 10px;
+.user-indicator {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #1a73e8;
+  color: white;
   font-weight: 500;
-}
-
-.comment-count {
-  font-weight: 600;
-}
-
-/* Mode toolbar at the bottom */
-.toolbar-container {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
   display: flex;
-  background-color: #ffffff;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
 }
 
-.toolbar-button {
-  padding: 12px 20px;
-  color: black;
+.share-button {
+  background-color: #1a73e8;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
-  border: none;
-  background: none;
-  font-size: 14px;
 }
 
-.toolbar-button:hover {
+.menu-button {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  color: #5f6368;
+}
+
+.menu-button:hover {
   background-color: rgba(0, 0, 0, 0.05);
 }
 
-.toolbar-button.active {
-  background-color: rgba(0, 0, 0, 0.1);
-  font-weight: 600;
-}
-
-/* Special styling for annotation mode button */
-.toolbar-button[class*='annotate'] {
-  position: relative;
-}
-
-.toolbar-button[class*='annotate']:after {
-  content: '';
+/* Canvas wrapper positioned below header */
+.canvas-wrapper {
   position: absolute;
-  bottom: 6px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 70%;
-  height: 2px;
-  background-color: transparent;
-  transition: background-color 0.2s;
+  top: 56px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  background-color: #f9f9fb;
+  background-image: 
+    linear-gradient(rgba(0,0,0,0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.1) 1px, transparent 1px);
+  background-size: 20px 20px;
 }
 
-.toolbar-button[class*='annotate'].active:after {
-  background-color: #ff4136;
-}
-
-.toolbar-button[class*='annotate'].active {
-  color: #ff4136;
-}
-
-/* Whiteboard placeholder */
-.whiteboard-placeholder {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: auto;
-  height: auto;
-  max-width: 70%;
-  max-height: 70%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border: 1px solid #000000;
-  background-color: white;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-}
-
-/* Annotation mode styles */
-.annotation-controls {
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  z-index: 101;
-  display: flex;
-  align-items: center;
-}
-
-.color-button {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  cursor: pointer;
-  margin: 0 4px;
-  transition: transform 0.2s ease;
-}
-
-.color-button:hover {
-  transform: scale(1.1);
-}
-
-.color-button.active {
-  border: 3px solid #333;
-}
-
-.tool-button {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 4px;
-  cursor: pointer;
-  margin: 0 4px;
-  transition: all 0.2s ease;
-  border: 1px solid #ddd;
-  background-color: white;
-}
-
-.tool-button:hover {
-  background-color: #f5f5f5;
-}
-
-.tool-button.active {
-  border: 2px solid #333;
-  background-color: #f0f0f0;
-}
-
-.annotation-badge {
-  position: absolute;
-  top: 16px;
-  left: 16px;
-  background-color: #ff4136;
-  color: white;
-  padding: 6px 12px;
-  border-radius: 16px;
-  font-weight: bold;
-  font-size: 14px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-  z-index: 101;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(255, 65, 54, 0.4);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(255, 65, 54, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(255, 65, 54, 0);
-  }
-}
-
-/* Add comment button */
-.fab-button {
-  position: absolute;
-  bottom: 20px;
-  left: 20px;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background-color: #333;
-  color: white;
-  font-size: 24px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-  border: none;
-  transition: transform 0.2s, background-color 0.2s;
-  z-index: 100;
-}
-
-.fab-button:hover {
-  transform: scale(1.05);
-  background-color: #444;
-}
-
-/* Zoom controls */
+/* Zoom controls - bottom right similar to reference */
 .zoom-controls {
   position: absolute;
-  bottom: 20px;
-  right: 20px;
+  bottom: 16px;
+  right: 16px;
   display: flex;
-  flex-direction: column;
+  align-items: center;
   background-color: white;
-  border-radius: 8px;
+  border-radius: 4px;
   overflow: hidden;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   z-index: 100;
 }
 
@@ -282,532 +136,310 @@
   border: none;
   background: none;
   font-size: 18px;
-  color: #333;
-  transition: background-color 0.2s;
+  color: #5f6368;
 }
 
-.zoom-button:hover {
-  background-color: #f0f0f0;
-}
-
-.zoom-value {
-  padding: 5px 0;
-  font-size: 12px;
-  text-align: center;
-  color: #555;
-  border-top: 1px solid #eee;
-  border-bottom: 1px solid #eee;
-}
-
-/* Comments and Stamps display */
-.comment-tag .comment-pin {
-  background-color: #ff4136; /* Red color as shown in the wireframe */
-}
-
-.stamp-icon {
-  background-color: #111;
-  color: white;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 50%;
-}
-
-/* Fullscreen button */
-.fullscreen-button {
-  position: absolute;
-  top: 32px;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background-color: white;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  border: none;
-  font-size: 16px;
-  color: #333;
-  z-index: 100;
-}
-
-/* Color picker styles */
-.color-picker-container {
-  position: absolute;
-  bottom: 130px;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
-  padding: 12px;
-  z-index: 102;
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 8px;
-  width: 280px;
-}
-
-.color-picker-option {
-  width: 36px;
-  height: 36px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-}
-
-.color-picker-option:hover {
-  transform: scale(1.1);
-}
-
-.color-picker-option.active {
-  border: 3px solid #333;
-}
-
-/* Annotation stroke width control */
-.stroke-width-control {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.stroke-width-preview {
-  height: 2px;
-  background-color: black;
-  border-radius: 2px;
-}
-
-.stroke-width-button {
-  border: none;
-  background: none;
-  cursor: pointer;
-  font-size: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 4px;
-}
-
-.stroke-width-button:hover {
-  background-color: #f0f0f0;
-}
-
-.stroke-width-button:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
+/* Whiteboard.css (continued) */
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  .scorebar-container, .goal-container {
-    padding: 8px 15px;
-    font-size: 12px;
+  .whiteboard-header {
+    padding: 0 8px;
   }
   
-  .toolbar-button {
-    padding: 10px 15px;
-    font-size: 12px;
+  .whiteboard-title {
+    font-size: 16px;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   
-  .fab-button {
-    width: 45px;
-    height: 45px;
-    font-size: 20px;
+  .share-button {
+    padding: 6px 12px;
+    font-size: 13px;
   }
   
-  .annotation-controls {
-    flex-wrap: wrap;
-    justify-content: center;
-    width: 90%;
-    max-width: 450px;
+  .sidebar-toolbar {
+    left: 4px;
+  }
+  
+  .comment-tracker {
+    width: 280px;
+  }
+  
+  .comment-tracker.collapsed {
+    transform: translateX(250px);
   }
 }
 
-/* Add to your Whiteboard.css file */
-
-/* Disabled toolbar button style */
-.toolbar-button.disabled {
-  color: #999;
-  background-color: #f5f5f5;
+@media (max-width: 480px) {
+  .whiteboard-title {
+    max-width: 100px;
+  }
+  
+  .share-button {
+    display: none;
+  }
+  
+  .comment-tracker {
+    width: 100%;
+    transform: translateX(100%);
+  }
+  
+  .comment-tracker.collapsed {
+    transform: translateX(calc(100% - 30px));
+  }
 }
 
-.toolbar-button.disabled:hover {
-  background-color: #f0f0f0;
+/* Whiteboard image styles */
+.whiteboard-image {
+  display: block;
+  background-color: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 2px;
 }
 
-/* Link visibility toggle styles */
-.link-visibility-indicator {
+/* Cursor tracking */
+.cursor-dot {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 1000;
+  transform: translate(-50%, -50%);
+}
+
+.cursor-label {
+  position: absolute;
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: white;
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translate(8px, -20px);
+  z-index: 1000;
+}
+
+/* Explainer styles */
+.comment-system-explainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1010;
+}
+
+.explainer-content {
+  width: 80%;
+  max-width: 600px;
+  background-color: white;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.explainer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.explainer-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #202124;
+  margin: 0;
+}
+
+.explainer-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #5f6368;
+}
+
+.explainer-steps {
+  margin-bottom: 24px;
+}
+
+.explainer-step {
+  display: flex;
+  margin-bottom: 16px;
+}
+
+.step-number {
+  width: 24px;
+  height: 24px;
+  background-color: #1a73e8;
+  color: white;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 6px 8px;
+  font-weight: 600;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.step-content {
+  flex: 1;
+}
+
+.step-title {
+  font-weight: 500;
+  margin-bottom: 4px;
+  color: #202124;
+}
+
+.step-description {
+  color: #5f6368;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.explainer-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.explainer-button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.explainer-button.primary {
+  background-color: #1a73e8;
+  color: white;
+  border: none;
+}
+
+.explainer-button.secondary {
+  background: none;
+  color: #1a73e8;
+  border: 1px solid #1a73e8;
+}
+
+/* Link visibility indicator styling */
+.link-visibility-indicator {
   position: absolute;
   bottom: 70px;
   left: 50%;
   transform: translateX(-50%);
   background-color: rgba(255, 255, 255, 0.9);
-  border-radius: 4px;
-  font-size: 12px;
-  color: #555;
+  border-radius: 16px;
+  padding: 6px 12px;
+  font-size: 13px;
+  color: #5f6368;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   z-index: 99;
   pointer-events: none;
   transition: opacity 0.3s ease;
 }
 
-.link-visibility-indicator.hidden {
-  opacity: 0;
-}
-
-/* Add to your Whiteboard.css file */
-
-/* Comment Cluster styling */
-.comment-cluster {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 50%;
-  color: white;
-  font-weight: bold;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-  cursor: pointer;
-  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
-  user-select: none;
-}
-
-.comment-cluster:hover {
-  transform: translate(-50%, -50%) scale(1.05);
-  box-shadow: 0 3px 8px rgba(0,0,0,0.3);
-}
-
-.comment-cluster.selected {
-  transform: translate(-50%, -50%) scale(1.1);
-  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.7);
-}
-
-/* Comment Thread styling */
-.comment-thread-container {
-  background-color: white;
-  border-radius: 6px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-  overflow: hidden;
-  animation: thread-appear 0.3s ease-out;
-}
-
-.thread-header {
-  padding: 10px 15px;
-  background-color: #f8f9fa;
-  border-bottom: 1px solid #eaecef;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.thread-pagination {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 14px;
-}
-
-.thread-pagination button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 16px;
-  color: #555;
-  padding: 3px 6px;
-  border-radius: 4px;
-  transition: background-color 0.2s;
-}
-
-.thread-pagination button:hover:not(:disabled) {
-  background-color: #eee;
-}
-
-.thread-pagination button:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-.thread-comment {
-  padding: 15px;
-}
-
-.comment-type-label {
-  font-size: 11px;
-  font-weight: bold;
-  text-transform: uppercase;
-  margin-bottom: 5px;
-  letter-spacing: 0.5px;
-}
-
-.comment-content {
-  font-size: 14px;
-  line-height: 1.5;
-  margin-bottom: 15px;
-  word-break: break-word;
-}
-
-.comment-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 12px;
-  color: #666;
-  padding-top: 10px;
-  border-top: 1px solid #eee;
-}
-
-.comment-actions {
-  display: flex;
-  gap: 15px;
-}
-
-.comment-actions button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 12px;
-  transition: color 0.2s;
-}
-
-.comment-actions button:hover {
-  text-decoration: underline;
-}
-
-.comment-reactions {
-  margin-top: 12px;
-  display: flex;
-  gap: 10px;
-}
-
-.reaction-button {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
-  border: 1px solid #ddd;
-  border-radius: 15px;
-  background: transparent;
-  color:black;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.reaction-button:hover {
-  background-color: #f5f5f5;
-}
-
-.reaction-button.active {
-  font-weight: 500;
-}
-
-@keyframes thread-appear {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Additional CSS for the clustering features */
-
-/* Clustering tooltip fade-in animation */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Comment cluster styling */
-.comment-cluster {
+/* Annotation mode styling */
+.annotation-badge {
   position: absolute;
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  top: 72px;
+  left: 16px;
+  background-color: #ff4136;
   color: white;
-  font-weight: bold;
-  font-size: 14px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-  cursor: pointer;
-  transform: translate(-50%, -50%);
-  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
-  z-index: 10;
-  user-select: none;
-  animation: clusterAppear 0.3s ease-out;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-weight: 500;
+  font-size: 13px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  z-index: 101;
 }
 
-.comment-cluster:hover {
-  transform: translate(-50%, -50%) scale(1.05);
-  box-shadow: 0 3px 12px rgba(0,0,0,0.3);
-  z-index: 11;
-}
-
-.comment-cluster.selected {
-  transform: translate(-50%, -50%) scale(1.1);
-  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.7), 0 4px 15px rgba(0,0,0,0.3);
-  z-index: 12;
-}
-
-/* Thread container */
-.comment-thread-container {
-  width: 280px;
+.annotation-controls {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
   background-color: white;
-  border-radius: 6px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-  overflow: hidden;
-  animation: thread-appear 0.3s ease-out;
+  border-radius: 8px;
+  padding: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  z-index: 101;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Comment clustering tooltip */
+.clustering-info-tooltip {
+  position: absolute;
+  bottom: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: white;
+  border-radius: 8px;
+  padding: 12px 16px;
+  width: 280px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   z-index: 100;
+  animation: fadeIn 0.3s;
 }
 
-.thread-header {
-  padding: 12px 15px;
-  background-color: #f6f8fa;
-  border-bottom: 1px solid #e1e4e8;
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* Make sure the comment tracker is always opened when entering whiteboard */
+.comment-tracker {
+  position: absolute;
+  top: 100px; /* Position below header */
+  right: 0;
+  height: 80%; /* Adjust height to account for header */
+  width: 320px;
+  background-color: white;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+  z-index: 50;
+  overflow: hidden;
+  transition: transform 0.3s ease, width 0.3s ease;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  border-radius:24px;
+}
+.comments-list{
+  overflow: scroll;
+}
+.comment-tracker.collapsed {
+  width: 30px;
 }
 
-.thread-pagination {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 14px;
-}
-
-.thread-pagination button {
-  background: none;
-  border: none;
+.collapse-toggle {
+  position: absolute;
+  top: 50%;
+  left: -24px;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 48px;
+  background-color: white;
+  border: 1px solid #e0e0e0;
+  border-right: none;
+  border-radius: 4px 0 0 4px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 16px;
   color: #555;
-  padding: 3px 6px;
-  border-radius: 4px;
-  transition: background-color 0.2s;
-}
-
-.thread-pagination button:hover:not(:disabled) {
-  background-color: #eee;
-}
-
-.thread-pagination button:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-.thread-comment {
-  padding: 15px;
-}
-
-.comment-type-label {
-  font-size: 11px;
-  font-weight: bold;
-  text-transform: uppercase;
-  margin-bottom: 5px;
-  letter-spacing: 0.5px;
-}
-
-.comment-content {
-  font-size: 14px;
-  line-height: 1.5;
-  margin-bottom: 15px;
-  word-break: break-word;
-}
-
-.comment-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 12px;
-  color: #666;
-  padding-top: 10px;
-  border-top: 1px solid #eee;
-}
-
-.comment-actions {
-  display: flex;
-  gap: 15px;
-}
-
-.comment-actions button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 12px;
+  box-shadow: -2px 2px 5px rgba(0, 0, 0, 0.1);
   transition: color 0.2s;
-}
-
-.comment-actions button:hover {
-  text-decoration: underline;
-}
-
-.comment-reactions {
-  margin-top: 12px;
-  display: flex;
-  gap: 10px;
-}
-
-.reaction-button {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
-  border: 1px solid #ddd;
-  border-radius: 15px;
-  background: white;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.reaction-button:hover {
-  background-color: #f5f5f5;
-}
-
-.reaction-button.active {
-  font-weight: 500;
-}
-
-/* Cluster animations */
-@keyframes clusterAppear {
-  from {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.8);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-}
-
-@keyframes thread-appear {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Toolbar button styles */
-.toolbar-button.disabled {
-  color: #777;
-  background-color: #f5f5f5;
-}
-
-.toolbar-button.disabled:hover {
-  background-color: #eeeeee;
+  z-index: 55;
 }

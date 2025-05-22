@@ -332,7 +332,7 @@ const CommunityPage = () => {
               {/* Most Recent Post Section */}
               {mostRecentPost && (
                 <div className="most-recent-post-section">
-                  <h2 className="section-title">Most Recent</h2>
+                  <h2 className="section-title-cp">Most Recent</h2>
                   <div className="critique-post main-post">
                     <div className="post-header">
                       <div className="post-author-info">
@@ -395,12 +395,12 @@ const CommunityPage = () => {
               {/* Threads Section */}
               {threads.length > 0 && (
                 <div className="threads-section">
-                  <h2 className="section-title">Threads</h2>
+                  <h2 className="section-title-cp">Threads</h2>
                   
                   {threads.map((thread) => (
                     <div key={thread.id} className="thread-container">
                       <div className="critique-post thread-post">
-                        <div className="thread-badge">Thread</div>
+                        <div className="thread-badge-cp">Thread</div>
                         <div className="post-header">
                           <div className="post-author-info">
                             <div className="post-author-avatar"></div>
@@ -458,16 +458,16 @@ const CommunityPage = () => {
                                 )}
                               </button>
                               <button 
-                                className="enter-whiteboard-btn"
-                                onClick={() => goToWhiteboard(thread.id)}
-                              >
-                                Enter Critique
-                              </button>
-                              <button 
                                 className="add-post-btn"
                                 onClick={() => addPostToThread(thread.id)}
                               >
                                 Add Post
+                              </button>
+                              <button 
+                                className="enter-whiteboard-btn"
+                                onClick={() => goToWhiteboard(thread.id)}
+                              >
+                                Enter Critique
                               </button>
                             </div>
                           </div>
@@ -612,7 +612,7 @@ const CommunityPage = () => {
           </div>
           
           <div className="community-section">
-            <h3 className="section-title">COMMUNITY GUIDELINES</h3>
+            <h3 className="section-title-cs">COMMUNITY GUIDELINES</h3>
             <div className="guidelines-list">
               {community?.guidelines && community.guidelines.length > 0 ? (
                 community.guidelines.map((guideline, index) => (
@@ -625,7 +625,7 @@ const CommunityPage = () => {
           </div>
           
           <div className="community-section">
-            <h3 className="section-title">RULES</h3>
+            <h3 className="section-title-cs">RULES</h3>
             <ol className="rules-list">
               {community?.rules && community.rules.length > 0 ? (
                 community.rules.map((rule, index) => (
@@ -638,7 +638,7 @@ const CommunityPage = () => {
           </div>
           
           <div className="community-section">
-            <h3 className="section-title">Moderators</h3>
+            <h3 className="section-title-cs">Moderators</h3>
             <div className="moderators-list">
               {community?.moderators && community.moderators.length > 0 ? (
                 community.moderators.map((mod, index) => (

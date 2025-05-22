@@ -90,8 +90,8 @@
 
 .join-button.following {
   background-color: white;
-  color: #4CAF50;
-  border: 1px solid #4CAF50;
+  color: #af4c4c;
+  border: 1px solid #af4c4c;
 }
 
 .join-button.following:hover {
@@ -178,11 +178,10 @@
   margin-bottom: 24px;
 }
 
-.section-title {
+.section-title-cp {
   font-size: 14px;
   font-weight: 700;
   margin-bottom: 12px;
-  text-transform: uppercase;
   letter-spacing: 0.5px;
   color: #555;
 }
@@ -196,8 +195,7 @@
   margin-bottom: 8px;
   padding: 8px;
   background-color: white;
-  border-radius: 4px;
-  border-left: 3px solid #4285F4;
+  border-left: 3px solid #000000;
 }
 
 .rule-item {
@@ -291,7 +289,7 @@
   margin-bottom: 32px;
 }
 
-.section-title {
+.section-title-cs {
   font-size: 18px;
   font-weight: 700;
   margin-bottom: 16px;
@@ -301,21 +299,23 @@
 .critique-post {
   background-color: white;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0px 0px rgba(255, 145, 0, 0.1);
   margin-bottom: 16px;
   overflow: hidden;
   position: relative;
   display: flex;
   flex-direction: column;
-  border: 1px solid #e0e0e0;
+  border: 1px solid #fff1e0;
 }
 
 .main-post {
-  border-left: 5px solid #4285F4;
+  /* border-left: 5px solid #4285F4; */
+  background-color:#fffcf8;
 }
 
 .thread-post {
-  border-left: 5px solid #9c27b0;
+  border-left: 5px solid #fff7ef;
+  border-radius: 0 8px 8px 0px;
 }
 
 .thread-child-post {
@@ -323,16 +323,16 @@
   border-left: 5px solid #7986cb;
 }
 
-.thread-badge {
+.thread-badge-cp {
   position: absolute;
   top: 12px;
   right: 12px;
-  background-color: #9c27b0;
+  background-color: #6b6b6b;
   color: white;
   padding: 2px 8px;
   border-radius: 4px;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .post-header {
@@ -500,7 +500,6 @@
   width:fit-content;
   align-self:right;
   padding: 8px 16px;
-  border-radius: 100px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
