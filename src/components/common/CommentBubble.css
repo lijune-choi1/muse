@@ -68,7 +68,8 @@
 }
 
 .comment-text {
-  color: #ffffff;
+  color: black;
+  font-family:'ruddy';
   font-size: 0.875rem;
   line-height: 1.4;
 }
@@ -81,7 +82,7 @@
 
 .hover-reaction {
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.8);
+  color: black;
   display: flex;
   align-items: center;
   gap: 3px;
@@ -89,7 +90,7 @@
 
 .hover-message {
   font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(0, 0, 0, 0.5);
   text-align: center;
   margin-top: 4px;
   font-style: italic;
@@ -177,12 +178,12 @@
   font-size: 0.75rem;
   font-weight: 500;
   cursor: pointer;
-  color: white;
+  color: rgb(0, 0, 0);
 }
 
 .comment-textarea {
   width: 100%;
-  min-height: 80px;
+  min-height: 20px;
   padding: 12px;
   border: none;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -191,7 +192,7 @@
   font-size: 0.875rem;
   outline: none;
   background-color: rgba(255, 255, 255, 0.05);
-  color: white;
+  color: rgb(0, 0, 0);
 }
 
 .comment-edit-actions {
@@ -260,7 +261,7 @@
 .reaction-button {
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.7);
+  color:black;
   font-size: 0.8rem;
   padding: 4px 8px;
   border-radius: 12px;
@@ -273,11 +274,11 @@
 
 .reaction-button:hover {
   background-color: rgba(255, 255, 255, 0.1);
-  color: white;
+  color: orange;
 }
 
 .reaction-button.active {
-  color: white;
+  color: grey;
   font-weight: 500;
 }
 
@@ -366,7 +367,7 @@
   flex: 1;
   border: none;
   background-color: rgba(255, 255, 255, 0.1);
-  color: white;
+  color: grey;
   border-radius: 16px;
   padding: 6px 12px;
   font-size: 0.8rem;

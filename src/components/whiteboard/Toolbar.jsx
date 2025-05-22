@@ -22,13 +22,6 @@ const ToolBar = ({
         <i className="icon-select">⊙</i>
       </button>
       
-      <button 
-        className={`toolbar-button ${currentMode === 'comment' ? 'active' : ''}`}
-        onClick={() => setMode('comment')}
-        title="Comment Mode"
-      >
-        <i className="icon-comment">✎</i>
-      </button>
       
       <button 
         className={`toolbar-button ${currentMode === 'annotate' ? 'active' : ''}`}

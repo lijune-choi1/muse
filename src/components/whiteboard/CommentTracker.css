@@ -51,21 +51,39 @@
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px solid #f0f0f0;
-    background-color: #f9f9fb;
+
   }
   
   .tracker-header h2 {
     margin: 0;
     font-size: 16px;
-    font-weight: 500;
-    color: #202124;
+    font-weight: 600;
+    color: grey;
+  }
+
+  .active-users-indicator{
+    width:auto;
+    z-index:9000;
+    position:fixed;
+    background-color:orange;
+    color:white;
+    bottom:8px;
+    left:8px;
+    padding:8px;
+    display:flex;
+    border-radius:8px;
+    font-size:14px;
+    font-weight:600;
+  }
+
+  .comment-count{
+    font-size:14px;
   }
   
   /* Update the filter tabs to match whiteboard UI */
   .filter-tabs {
     display: flex;
     border-bottom: 1px solid #f0f0f0;
-    background-color: #f9f9fb;
   }
   
   .filter-tab {
@@ -75,7 +93,7 @@
     border: none;
     border-bottom: 2px solid transparent;
     cursor: pointer;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 500;
     color: #5f6368;
     display: flex;
@@ -97,17 +115,18 @@
   /* Update search container to match whiteboard UI */
   .search-container {
     padding: 10px 15px;
-    background-color: white;
     border-bottom: 1px solid #f0f0f0;
     position: relative;
   }
   
   .search-input {
     width: 100%;
-    padding: 8px 30px 8px 10px;
-    border-radius: 4px;
-    border: 1px solid #dadce0;
+    border-radius:8px;
+    padding: 0.25rem;
+    border: 1px solid #ffb224;
+    background:rgb(255, 255, 255);
     font-size: 14px;
+    color:white;
     outline: none;
     transition: border-color 0.2s;
   }
@@ -120,9 +139,10 @@
   /* Update comment item styling to match whiteboard UI */
   .comment-item {
     display: flex;
-    padding: 12px 15px;
+    padding: 10px;
     border-bottom: 1px solid #f0f0f0;
     cursor: pointer;
+    color:black;
     transition: background-color 0.2s;
   }
   
@@ -131,8 +151,8 @@
   }
   
   .comment-item.selected {
-    background-color: #e8f0fe;
-    border-left: 3px solid #1a73e8;
+    background-color: #fef4e8;
+    border-left: 3px solid #e8b51a;
   }
   
   /* Update the comment type indicator colors to match the whiteboard */
