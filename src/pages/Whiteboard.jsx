@@ -442,8 +442,6 @@ const Whiteboard = () => {
         
         <div className="header-actions">
           <button className="user-indicator">{currentUser?.displayName?.charAt(0) || "U"}</button>
-          <button className="share-button">Share</button>
-          <button className="menu-button">⋮</button>
         </div>
       </div>
       
@@ -639,13 +637,7 @@ const Whiteboard = () => {
             <span className="user-dot" style={{ backgroundColor: '#4285F4' }}></span>
             <span>{activeUserCount} {activeUserCount === 1 ? 'user' : 'users'} online</span>
           </div>
-          <button 
-            className="cursor-toggle-button"
-            onClick={toggleCursorTracking}
-            title="Toggle cursor tracking"
-          >
-            👁
-          </button>
+          
         </div>
       )}
       

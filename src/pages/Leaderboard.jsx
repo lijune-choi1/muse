@@ -245,19 +245,19 @@ const Leaderboard = () => {
           Featured Posts
         </button>
         
-        <button 
+        {/* <button 
           className={`tab-button ${activeTab === 'users' ? 'active' : ''}`}
           onClick={() => setActiveTab('users')}
         >
           Top Users
-        </button>
-        
+        </button> */}
+{/*         
         <button 
           className={`tab-button ${activeTab === 'communities' ? 'active' : ''}`}
           onClick={() => setActiveTab('communities')}
         >
           Communities
-        </button>
+        </button> */}
       </div>
       
       <div className="leaderboard-content">

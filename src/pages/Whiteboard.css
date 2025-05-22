@@ -16,7 +16,7 @@
   right: 0;
   height: 48px;
   margin:24px;
-  background: linear-gradient(rgb(255, 244, 224),white);
+  background:white;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
   border-radius:8px;
   display: flex;
@@ -32,14 +32,10 @@
   background: none;
   border: none;
   font-size: 14px;
-  color: #1a73e8;
+  color: orange;
   cursor: pointer;
   padding: 8px 12px;
   border-radius: 4px;
-}
-
-.back-button:hover {
-  background-color: rgba(26, 115, 232, 0.05);
 }
 
 .whiteboard-title {
@@ -107,8 +103,8 @@
   overflow: hidden;
   background-color: #f9f9fb;
   background-image: 
-    linear-gradient(rgba(0,0,0,0.1) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,0,0,0.1) 1px, transparent 1px);
+    linear-gradient(rgba(255, 187, 0, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 149, 0, 0.1) 1px, transparent 1px);
   background-size: 20px 20px;
 }
 
@@ -165,6 +161,7 @@
   }
   
   .comment-tracker {
+    
     width: 280px;
   }
   
@@ -352,6 +349,7 @@
 /* Annotation mode styling */
 .annotation-badge {
   position: absolute;
+  font-family:'ruddy';
   top: 72px;
   left: 16px;
   background-color: #ff4136;
@@ -401,10 +399,12 @@
 
 /* Make sure the comment tracker is always opened when entering whiteboard */
 .comment-tracker {
+  margin-right:24px;
+  background: linear-gradient(rgb(255, 244, 224),white);
   position: absolute;
-  top: 100px; /* Position below header */
+  top: 90px; /* Position below header */
   right: 0;
-  height: 80%; /* Adjust height to account for header */
+  height: 75%; /* Adjust height to account for header */
   width: 320px;
   background-color: white;
   box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
@@ -414,8 +414,10 @@
   display: flex;
   flex-direction: column;
   border-radius:24px;
+  border: 1px solid rgb(255, 233, 190);
 }
 .comments-list{
+  padding:20px;
   overflow: scroll;
 }
 .comment-tracker.collapsed {

@@ -107,6 +107,8 @@
 
 @media (min-width: 960px) {
   .featured-posts-grid {
+    margin: auto;
+    width: fit-content;
     grid-template-columns: repeat(2, 1fr);
   }
 }

@@ -560,14 +560,14 @@ const CreatePost = ({ redirectToWhiteboard = true }) => {
           </button>
           <button 
             type="submit" 
-            className="submit-button"
+            className="submit-button-cp"
             disabled={!formData.community || !formData.title || !formData.imageFile}
           >
             {formData.threadId ? 'Add to Thread' : 'Create Post'}
           </button>
         </div>
         
-        {/* Debug info */}
+        {/* Debug info
         {process.env.NODE_ENV === 'development' && (
           <div className="debug-info" style={{ marginTop: '30px', padding: '15px', backgroundColor: '#f5f5f5', fontSize: '12px' }}>
             <details>
@@ -581,7 +581,7 @@ const CreatePost = ({ redirectToWhiteboard = true }) => {
               }, null, 2)}</pre>
             </details>
           </div>
-        )}
+        )} */}
       </form>
     </div>
   );
