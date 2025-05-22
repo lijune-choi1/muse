@@ -5,6 +5,16 @@
     margin:0;
  }
  :is(h1, h2, h3, h4, h5, h6) {
- font-family: argent-pixel-cf, sans-serif;
+   font-family: ruddy, sans-serif;
+ font-weight:600;
 
 }
+input::file-selector-button {
+   font-weight: 500;
+   background: orange;
+   color:black;
+   padding:8px;
+   border: none;
+   border-radius: 3px;
+ }
+ 
